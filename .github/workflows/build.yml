@@ -8,6 +8,10 @@ on:
   # 允许手动触发
   workflow_dispatch:
 
+# 声明 GITHUB_TOKEN 权限
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
