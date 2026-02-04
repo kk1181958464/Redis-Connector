@@ -48,13 +48,11 @@ jobs:
 
       # 构建应用
       - name: Build Electron app
-        run: npm run electron:build
+        run: npm run build && npm run build:electron && electron-builder --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS: 禁用代码签名（没有 Apple 开发者证书）
+          # 禁用代码签名（没有开发者证书）
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          # 禁用公证
-          CSC_LINK: ""
 
       # 上传构建产物
       - name: Upload artifacts

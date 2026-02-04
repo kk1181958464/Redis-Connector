@@ -20,7 +20,10 @@
     "resp",
     "database"
   ],
-  "author": "",
+  "author": {
+    "name": "KK1181958464",
+    "email": "1181958464@qq.com"
+  },
   "license": "MIT",
   "dependencies": {
     "lucide-react": "^0.563.0",
