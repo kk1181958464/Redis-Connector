@@ -26,6 +26,19 @@ const electronAPI = {
     import: (data: any) => ipcRenderer.invoke('config:import', data),
   },
 
+  // 窗口控制
+  window: {
+    minimize: () => ipcRenderer.send('window:minimize'),
+    maximize: () => ipcRenderer.send('window:maximize'),
+    close: () => ipcRenderer.send('window:close'),
+    isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
+    onMaximizedChange: (callback: (isMaximized: boolean) => void) => {
+      const subscription = (_event: any, isMaximized: boolean) => callback(isMaximized);
+      ipcRenderer.on('window:maximized-change', subscription);
+      return () => ipcRenderer.removeListener('window:maximized-change', subscription);
+    },
+  },
+
   // 事件监听
   on: (channel: string, callback: (...args: any[]) => void) => {
     const validChannels = ['redis:status', 'redis:error', 'redis:message'];

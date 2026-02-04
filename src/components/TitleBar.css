@@ -1,0 +1,80 @@
+/* 自定义标题栏样式 */
+
+.title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 32px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.title-bar-drag {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  padding-left: 8px;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.title-bar-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-bar-icon img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.title-bar-text {
+  font-size: 12px;
+  color: #ccc;
+  font-weight: 400;
+}
+
+.title-bar-controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.title-bar-button {
+  width: 46px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.title-bar-button:hover {
+  background: #333;
+}
+
+.title-bar-button:active {
+  background: #444;
+}
+
+.title-bar-close:hover {
+  background: #e81123;
+  color: #fff;
+}
+
+.title-bar-close:active {
+  background: #bf0f1d;
+}

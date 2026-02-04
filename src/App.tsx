@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { Unplug, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Terminal } from 'lucide-react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ToastProvider } from './components/Toast';
+import { TitleBar } from './components/TitleBar';
 import ConnectionPanel from './components/ConnectionPanel';
 import CommandConsole from './components/CommandConsole';
 import KeyBrowser from './components/KeyBrowser';
@@ -458,6 +459,7 @@ function AppContent() {
 
   return (
     <div className="app">
+      <TitleBar />
       <div className="app-header">
         <div className="header-left">
           <h1>{t('app.title')}</h1>

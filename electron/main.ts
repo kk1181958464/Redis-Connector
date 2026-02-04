@@ -46,6 +46,7 @@ async function createWindow(): Promise<void> {
     minHeight: 600,
     title: 'Redis Connector',
     icon: icon.isEmpty() ? undefined : icon,
+    frame: false,  // 无边框窗口
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -144,7 +145,37 @@ app.whenReady().then(async () => {
   // 设置 IPC 处理器
   setupRedisHandlers();
 
+  // 设置窗口控制 IPC
+  ipcMain.on('window:minimize', () => {
+    mainWindow?.minimize();
+  });
+
+  ipcMain.on('window:maximize', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+
+  ipcMain.on('window:close', () => {
+    mainWindow?.close();
+  });
+
+  ipcMain.handle('window:isMaximized', () => {
+    return mainWindow?.isMaximized() ?? false;
+  });
+
   await createWindow();
+
+  // 监听窗口最大化状态变化
+  mainWindow?.on('maximize', () => {
+    mainWindow?.webContents.send('window:maximized-change', true);
+  });
+
+  mainWindow?.on('unmaximize', () => {
+    mainWindow?.webContents.send('window:maximized-change', false);
+  });
 
   // 创建系统托盘
   createTray();
