@@ -138,6 +138,9 @@ function createTray(): void {
 
 // 应用就绪
 app.whenReady().then(async () => {
+  // 隐藏默认菜单栏
+  Menu.setApplicationMenu(null);
+
   // 设置 IPC 处理器
   setupRedisHandlers();
 
