@@ -1,0 +1,60 @@
+/* StatusBar 样式 */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.status-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-text {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-text .status-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.status-divider {
+  color: var(--border);
+  opacity: 0.5;
+}
+
+.status-name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.status-info {
+  color: var(--text-muted);
+  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.status-right {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.version {
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-family: 'Consolas', 'Monaco', monospace;
+}

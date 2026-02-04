@@ -1,0 +1,45 @@
+/**
+ * Electron 预加载脚本
+ * 在渲染进程中暴露安全的 API
+ */
+
+import { contextBridge, ipcRenderer } from 'electron';
+
+// 暴露给渲染进程的 API
+const electronAPI = {
+  // Redis 连接管理
+  redis: {
+    connect: (config: any) => ipcRenderer.invoke('redis:connect', config),
+    disconnect: (connectionId: string) => ipcRenderer.invoke('redis:disconnect', connectionId),
+    execute: (connectionId: string, command: string) => ipcRenderer.invoke('redis:execute', connectionId, command),
+    pipeline: (connectionId: string, commands: string[]) => ipcRenderer.invoke('redis:pipeline', connectionId, commands),
+    getStatus: (connectionId: string) => ipcRenderer.invoke('redis:getStatus', connectionId),
+    listConnections: () => ipcRenderer.invoke('redis:listConnections'),
+    test: (config: any) => ipcRenderer.invoke('redis:test', config),
+  },
+
+  // 连接配置存储
+  config: {
+    save: (configs: any[]) => ipcRenderer.invoke('config:save', configs),
+    load: () => ipcRenderer.invoke('config:load'),
+    export: () => ipcRenderer.invoke('config:export'),
+    import: (data: any) => ipcRenderer.invoke('config:import', data),
+  },
+
+  // 事件监听
+  on: (channel: string, callback: (...args: any[]) => void) => {
+    const validChannels = ['redis:status', 'redis:error', 'redis:message'];
+    if (validChannels.includes(channel)) {
+      const subscription = (_event: any, ...args: any[]) => callback(...args);
+      ipcRenderer.on(channel, subscription);
+      return () => ipcRenderer.removeListener(channel, subscription);
+    }
+    return () => {};
+  },
+};
+
+// 暴露到 window.electronAPI
+contextBridge.exposeInMainWorld('electronAPI', electronAPI);
+
+// TypeScript 类型声明
+export type ElectronAPI = typeof electronAPI;

@@ -1,0 +1,280 @@
+/* App 布局样式 */
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+
+.app-header {
+  background: var(--bg-secondary);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-header .subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.sidebar {
+  background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+
+/* 侧边栏折叠时的展开条 */
+.sidebar-collapsed-resizer {
+  width: 8px;
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-right: 1px solid var(--border);
+}
+
+.sidebar-collapsed-resizer:hover {
+  width: 28px;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sidebar-collapsed-resizer .expand-icon {
+  opacity: 0;
+  color: white;
+  font-size: 12px;
+  transition: opacity var(--transition-normal);
+}
+
+.sidebar-collapsed-resizer:hover .expand-icon {
+  opacity: 1;
+}
+
+/* 侧边栏分割条（含折叠按钮） */
+.sidebar-resizer {
+  width: 6px;
+  background: var(--border);
+  cursor: col-resize;
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar-resizer:hover,
+.sidebar-resizer.dragging {
+  background: var(--accent);
+}
+
+/* 侧边栏分割条上的折叠按钮 */
+.sidebar-resizer .toggle-sidebar-btn {
+  position: absolute;
+  width: 22px;
+  height: 52px;
+  padding: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.sidebar-resizer:hover .toggle-sidebar-btn {
+  opacity: 1;
+}
+
+.sidebar-resizer .toggle-sidebar-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* 拖拽时禁止选择文本 */
+.app-body:has(.sidebar-resizer.dragging) {
+  user-select: none;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-primary);
+}
+
+.content-top {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-bottom {
+  min-height: 100px;
+  overflow: hidden;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+}
+
+/* 控制台分隔条 */
+.console-resizer {
+  height: 6px;
+  background: var(--border);
+  cursor: row-resize;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.console-resizer:hover,
+.console-resizer.dragging {
+  background: var(--accent);
+}
+
+.console-resizer .toggle-console-btn {
+  position: absolute;
+  width: 70px;
+  height: 22px;
+  padding: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  top: -22px;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.console-resizer .toggle-console-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+/* 控制台隐藏时的展开按钮 - 悬浮在底部 */
+.console-collapsed {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.console-collapsed .toggle-console-btn {
+  padding: 8px 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+.console-collapsed .toggle-console-btn:hover {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* 拖拽时禁止选择文本 */
+.main-content:has(.console-resizer.dragging) {
+  user-select: none;
+}
+
+/* 无连接状态 */
+.no-connection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  padding: 40px;
+}
+
+.no-connection-icon {
+  font-size: 72px;
+  margin-bottom: 20px;
+  opacity: 0.4;
+  filter: grayscale(0.5);
+}
+
+.no-connection h2 {
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.no-connection p {
+  font-size: 14px;
+  color: var(--text-muted);
+}

@@ -1,0 +1,347 @@
+/* ExportImportModal 样式 */
+.export-import-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 500px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.export-import-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.export-import-modal .modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.export-import-modal .close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-normal);
+}
+
+.export-import-modal .close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.export-import-modal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.export-import-modal .form-error {
+  color: var(--error);
+  font-size: 13px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--error-muted);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+}
+
+.export-import-modal .form-group {
+  margin-bottom: 20px;
+}
+
+.export-import-modal .form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.export-import-modal .form-group textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 120px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+}
+
+/* 格式选择 */
+.format-options {
+  display: flex;
+  gap: 12px;
+}
+
+.format-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.format-option:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.format-option.active {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: var(--accent);
+}
+
+/* 导出信息 */
+.export-info {
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.export-info p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 文件输入 */
+.file-input {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.file-input:hover {
+  border-color: var(--accent);
+}
+
+/* 进度条 */
+.progress-bar {
+  position: relative;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Footer */
+.export-import-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.export-import-modal .cancel-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.export-import-modal .cancel-btn:hover:not(:disabled) {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.export-import-modal .submit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.export-import-modal .submit-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.4);
+}
+
+.export-import-modal .submit-btn:disabled,
+.export-import-modal .cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 冲突处理选项 */
+.conflict-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.radio-option:hover {
+  border-color: var(--text-muted);
+}
+
+.radio-option input[type="radio"] {
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.radio-option input[type="radio"]:checked + .radio-label {
+  color: var(--accent);
+}
+
+.radio-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 100px;
+}
+
+.radio-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+/* 导入统计 */
+.import-stats {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stats-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--success);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.stats-items {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stats-value {
+  font-size: 24px;
+  font-weight: 700;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.stats-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stats-item.success .stats-value {
+  color: var(--success);
+}
+
+.stats-item.success .stats-label {
+  color: var(--success);
+}
+
+.stats-item.warning .stats-value {
+  color: #eab308;
+}
+
+.stats-item.warning .stats-label {
+  color: #eab308;
+}
+
+.stats-item.info .stats-value {
+  color: var(--accent);
+}
+
+.stats-item.info .stats-label {
+  color: var(--accent);
+}

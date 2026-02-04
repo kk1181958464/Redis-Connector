@@ -1,0 +1,403 @@
+/* ConnectionModal 样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: overlayFadeIn 0.2s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 500px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: modalSlideIn 0.25s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-tertiary);
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 18px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-normal);
+}
+
+.close-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* Tabs */
+.modal-tabs {
+  display: flex;
+  padding: 0 24px;
+  gap: 4px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-tabs .tab {
+  padding: 14px 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all var(--transition-normal);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.modal-tabs .tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.modal-tabs .tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: transparent;
+}
+
+/* Form */
+.modal-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.form-section {
+  margin-bottom: 28px;
+}
+
+.form-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+/* 复选框标签需要覆盖上面的 block 样式 */
+.form-group label.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+}
+
+.form-group textarea {
+  resize: vertical;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  min-height: 80px;
+}
+
+/* Password input with toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-normal);
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+/* Auth options */
+.auth-options {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.auth-option {
+  padding: 8px 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.auth-option:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.auth-option.active {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+
+/* Error */
+.form-error {
+  color: var(--error);
+  font-size: 13px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: var(--error-muted);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Footer */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-tertiary);
+}
+
+.modal-footer button {
+  min-width: 90px;
+  padding: 10px 24px;
+  font-weight: 500;
+}
+
+.modal-footer button.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.modal-footer button.primary:hover {
+  background: var(--accent-hover);
+}
+
+.modal-footer button.secondary {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+}
+
+.modal-footer button.secondary:hover {
+  background: var(--bg-elevated);
+}
+
+/* Test button */
+.modal-footer button.test-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-footer button.test-btn:hover:not(:disabled) {
+  background: var(--accent-muted);
+}
+
+.modal-footer button.test-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Test result */
+.test-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.test-result.success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid var(--success);
+  color: var(--success);
+}
+
+.test-result.error {
+  background: var(--error-muted);
+  border: 1px solid var(--error);
+  color: var(--error);
+}
+
+.test-result .version {
+  margin-left: auto;
+  font-size: 12px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* TLS Section */
+.tls-section {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.tls-section .section-header {
+  margin-bottom: 0;
+}
+
+.tls-section .section-header .checkbox-label {
+  margin-bottom: 0;
+}
+
+.tls-options {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin: 0;
+}
+
+.checkbox-label.small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.checkbox-label.small input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+}
+
+.form-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
