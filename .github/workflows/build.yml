@@ -35,6 +35,13 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      # Linux: 安装构建 AppImage/deb 所需依赖
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools rpm
+
       # 安装依赖
       - name: Install dependencies
         run: npm ci
@@ -44,6 +51,10 @@ jobs:
         run: npm run electron:build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS: 禁用代码签名（没有 Apple 开发者证书）
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # 禁用公证
+          CSC_LINK: ""
 
       # 上传构建产物
       - name: Upload artifacts
