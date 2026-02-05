@@ -6,6 +6,7 @@ release/
 Thumbs.db
 *.local
 .idea/
+.claude/
 CLAUDE.md
 DESIGN.md
 AGENTS.md
