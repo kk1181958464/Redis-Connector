@@ -49,7 +49,32 @@
   color: var(--text-muted);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+/* 控制台展开按钮 */
+.console-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.console-toggle-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.console-toggle-btn svg {
+  flex-shrink: 0;
 }
 
 .version {

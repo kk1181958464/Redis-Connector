@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Activity, RefreshCw, Pause, Play } from 'lucide-react';
+import { X, Activity, Pause, Play } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import './PerformanceChart.css';
 

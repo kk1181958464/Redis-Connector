@@ -1,27 +1,11 @@
 /* ConnectionInfoModal 样式 */
 
-.info-modal-content {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  width: 90%;
-  max-width: 720px;
-  max-height: 85vh;
+/* 覆盖 Modal 基础样式 */
+.connection-info-modal .modal-body-base {
+  padding: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-lg);
-  animation: infoModalSlideIn 0.25s ease;
-}
-
-@keyframes infoModalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  overflow: hidden;
 }
 
 .info-modal-body {

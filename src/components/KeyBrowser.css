@@ -227,6 +227,21 @@
   overflow-y: auto;
 }
 
+/* 列表视图容器 */
+.list-view-content {
+  transition: opacity 0.15s ease;
+}
+
+.list-view-content.sort-animating {
+  opacity: 0.5;
+}
+
+/* 排序选择器激活状态 */
+.sort-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-muted);
+}
+
 .empty-keys {
   padding: 40px 20px;
   text-align: center;

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Unplug, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Terminal } from 'lucide-react';
+import { Unplug, ChevronRight, ChevronLeft, ChevronDown } from 'lucide-react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ToastProvider } from './components/Toast';
 import { TitleBar } from './components/TitleBar';
@@ -449,7 +449,7 @@ function AppContent() {
 
   // 切换控制台显示
   const toggleConsole = () => {
-    setConsoleVisible((prev: boolean) => !prev);
+    setConsoleVisible(prev => !prev);
   };
 
   // 切换侧边栏显示
@@ -470,19 +470,12 @@ function AppContent() {
       </div>
 
       <div className="app-body" ref={appBodyRef}>
-        {/* 侧边栏折叠时的展开按钮 */}
-        {!sidebarVisible && (
-          <div
-            className="sidebar-collapsed-resizer"
-            onClick={toggleSidebar}
-            title={t('sidebar.show') || '显示侧边栏'}
-          >
-            <span className="expand-icon"><ChevronRight size={14} /></span>
-          </div>
-        )}
-
-        {sidebarVisible && (
-          <aside className="sidebar" style={{ width: sidebarWidth }}>
+        {/* 侧边栏 - 始终渲染，通过 CSS 控制滑动动画 */}
+        <aside
+          className={`sidebar ${sidebarVisible ? 'sidebar-visible' : 'sidebar-hidden'}`}
+          style={{ width: sidebarVisible ? sidebarWidth : 0 }}
+        >
+          <div className="sidebar-content" style={{ width: sidebarWidth }}>
             <ConnectionPanel
               connections={connections}
               activeConnectionId={activeConnectionId}
@@ -493,27 +486,26 @@ function AppContent() {
               onDelete={handleDeleteConnection}
               onExecute={handleExecuteForConnection}
             />
-          </aside>
-        )}
-
-        {/* 侧边栏分割条（含折叠按钮） */}
-        {sidebarVisible && (
-          <div
-            className={`sidebar-resizer ${isSidebarDragging ? 'dragging' : ''}`}
-            onMouseDown={handleSidebarMouseDown}
-          >
-            <button
-              className="toggle-sidebar-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleSidebar();
-              }}
-              title={t('sidebar.hide') || '隐藏侧边栏'}
-            >
-              <ChevronLeft size={14} />
-            </button>
           </div>
-        )}
+        </aside>
+
+        {/* 侧边栏分割条（含折叠/展开按钮） */}
+        <div
+          className={`sidebar-resizer ${isSidebarDragging ? 'dragging' : ''} ${!sidebarVisible ? 'collapsed' : ''}`}
+          onMouseDown={sidebarVisible ? handleSidebarMouseDown : undefined}
+          onClick={!sidebarVisible ? toggleSidebar : undefined}
+        >
+          <button
+            className="toggle-sidebar-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleSidebar();
+            }}
+            title={sidebarVisible ? (t('sidebar.hide') || '隐藏侧边栏') : (t('sidebar.show') || '显示侧边栏')}
+          >
+            {sidebarVisible ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+          </button>
+        </div>
 
         <main className="main-content" ref={mainContentRef}>
           {activeConnection?.status === 'connected' ? (
@@ -543,29 +535,18 @@ function AppContent() {
                 </div>
               )}
 
-              {/* 隐藏时显示展开按钮 */}
-              {!consoleVisible && (
-                <div className="console-collapsed">
-                  <button
-                    className="toggle-console-btn expand"
-                    onClick={toggleConsole}
-                    title={t('console.show') || '显示控制台'}
-                  >
-                    <ChevronUp size={14} /> {t('console.execute')}
-                  </button>
-                </div>
-              )}
-
-              {consoleVisible && (
-                <div className="content-bottom" style={{ height: consoleHeight }}>
-                  <CommandConsole
-                    history={commandHistory}
-                    onExecute={handleExecute}
-                    onClear={() => setCommandHistory([])}
-                    disabled={activeConnection?.status !== 'connected'}
-                  />
-                </div>
-              )}
+              {/* 控制台 - 始终渲染，通过 CSS 控制滑动动画 */}
+              <div
+                className={`content-bottom ${consoleVisible ? 'console-visible' : 'console-hidden'}`}
+                style={{ height: consoleVisible ? consoleHeight : 0 }}
+              >
+                <CommandConsole
+                  history={commandHistory}
+                  onExecute={handleExecute}
+                  onClear={() => setCommandHistory([])}
+                  disabled={activeConnection?.status !== 'connected'}
+                />
+              </div>
             </>
           ) : (
             <div className="no-connection">
@@ -577,7 +558,11 @@ function AppContent() {
         </main>
       </div>
 
-      <StatusBar connection={activeConnection} />
+      <StatusBar
+        connection={activeConnection}
+        consoleVisible={consoleVisible}
+        onToggleConsole={toggleConsole}
+      />
 
       {/* 快捷键帮助面板 */}
       <ShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />

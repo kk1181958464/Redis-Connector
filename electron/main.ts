@@ -162,6 +162,11 @@ app.whenReady().then(async () => {
     mainWindow?.close();
   });
 
+  ipcMain.on('window:quit', () => {
+    isQuitting = true;
+    app.quit();
+  });
+
   ipcMain.handle('window:isMaximized', () => {
     return mainWindow?.isMaximized() ?? false;
   });

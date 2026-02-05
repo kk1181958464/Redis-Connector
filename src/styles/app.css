@@ -59,40 +59,32 @@
   overflow: hidden;
   flex-shrink: 0;
   border-right: 1px solid var(--border);
+  transition: width 0.3s ease-in-out, opacity 0.25s ease-in-out, border 0.2s ease-in-out;
 }
 
-/* 侧边栏折叠时的展开条 */
-.sidebar-collapsed-resizer {
-  width: 8px;
-  background: var(--bg-tertiary);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  flex-shrink: 0;
+/* 侧边栏内容容器 - 保持固定宽度 */
+.sidebar-content {
+  height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  border-right: 1px solid var(--border);
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.sidebar-collapsed-resizer:hover {
-  width: 28px;
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.sidebar-collapsed-resizer .expand-icon {
-  opacity: 0;
-  color: white;
-  font-size: 12px;
-  transition: opacity var(--transition-normal);
-}
-
-.sidebar-collapsed-resizer:hover .expand-icon {
+/* 侧边栏展开状态 */
+.sidebar.sidebar-visible {
   opacity: 1;
 }
 
-/* 侧边栏分割条（含折叠按钮） */
+/* 侧边栏收起状态 */
+.sidebar.sidebar-hidden {
+  opacity: 0;
+  border-right: none;
+  pointer-events: none;
+  width: 0 !important;
+  min-width: 0;
+}
+
+/* 侧边栏分割条（含折叠/展开按钮） */
 .sidebar-resizer {
   width: 6px;
   background: var(--border);
@@ -107,7 +99,20 @@
   background: var(--accent);
 }
 
-/* 侧边栏分割条上的折叠按钮 */
+/* 侧边栏折叠时的分割条样式 */
+.sidebar-resizer.collapsed {
+  cursor: pointer;
+  width: 6px;
+  background: var(--bg-tertiary);
+  border-right: 1px solid var(--border);
+}
+
+.sidebar-resizer.collapsed:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 侧边栏分割条上的折叠/展开按钮 */
 .sidebar-resizer .toggle-sidebar-btn {
   position: absolute;
   width: 22px;
@@ -141,6 +146,12 @@
   border-color: var(--accent);
 }
 
+/* 折叠状态下按钮始终显示，但更窄 */
+.sidebar-resizer.collapsed .toggle-sidebar-btn {
+  opacity: 1;
+  width: 16px;
+}
+
 /* 拖拽时禁止选择文本 */
 .app-body:has(.sidebar-resizer.dragging) {
   user-select: none;
@@ -163,10 +174,22 @@
 }
 
 .content-bottom {
-  min-height: 100px;
   overflow: hidden;
   flex-shrink: 0;
+  transition: height 0.35s ease-in-out, opacity 0.3s ease-in-out, border 0.2s ease-in-out;
+}
+
+/* 控制台展开状态 */
+.content-bottom.console-visible {
+  opacity: 1;
   border-top: 1px solid var(--border);
+}
+
+/* 控制台收起状态 */
+.content-bottom.console-hidden {
+  opacity: 0;
+  border-top: none;
+  pointer-events: none;
 }
 
 /* 控制台分隔条 */
@@ -211,38 +234,7 @@
   border-color: var(--accent);
 }
 
-/* 控制台隐藏时的展开按钮 - 悬浮在底部 */
-.console-collapsed {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-}
-
-.console-collapsed .toggle-console-btn {
-  padding: 8px 24px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: var(--shadow-md);
-}
-
-.console-collapsed .toggle-console-btn:hover {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
+/* 控制台隐藏时的展开按钮 - 已移至 StatusBar */
 
 /* 拖拽时禁止选择文本 */
 .main-content:has(.console-resizer.dragging) {

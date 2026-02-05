@@ -1,3 +1,4 @@
+import { ChevronUp } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import './StatusBar.css';
 
@@ -15,9 +16,11 @@ interface Connection {
 
 interface StatusBarProps {
   connection?: Connection;
+  consoleVisible?: boolean;
+  onToggleConsole?: () => void;
 }
 
-function StatusBar({ connection }: StatusBarProps) {
+function StatusBar({ connection, consoleVisible, onToggleConsole }: StatusBarProps) {
   const { t, settings } = useSettings();
 
   const getStatusText = (status?: string): string => {
@@ -60,6 +63,17 @@ function StatusBar({ connection }: StatusBarProps) {
         )}
       </div>
       <div className="status-right">
+        {/* 控制台展开按钮 */}
+        {!consoleVisible && onToggleConsole && connection?.status === 'connected' && (
+          <button
+            className="console-toggle-btn"
+            onClick={onToggleConsole}
+            title={settings.language === 'zh-CN' ? '显示控制台' : 'Show Console'}
+          >
+            <ChevronUp size={14} />
+            <span>{settings.language === 'zh-CN' ? '控制台' : 'Console'}</span>
+          </button>
+        )}
         <span className="version">Redis Connector v1.0.0</span>
       </div>
     </div>

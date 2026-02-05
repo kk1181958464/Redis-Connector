@@ -61,6 +61,7 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
   // 排序方式
   const [sortBy, setSortBy] = useState<'name' | 'type' | 'ttl'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortAnimating, setSortAnimating] = useState(false); // 排序动画状态
 
   // SCAN 游标状态
   const [hasMore, setHasMore] = useState(true);
@@ -1697,10 +1698,27 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
   // 渲染树形节点
   const renderTreeNode = (node: TreeNode, depth: number = 0): React.ReactNode => {
     const sortedChildren = Array.from(node.children.entries()).sort((a, b) =>
-      a[0].localeCompare(b[0])
+      sortOrder === 'asc' ? a[0].localeCompare(b[0]) : b[0].localeCompare(a[0])
     );
-    const sortedKeys = [...node.keys].sort((a, b) => a.key.localeCompare(b.key));
-    const isExpanded = expandedPaths.has(node.fullPath) || node.fullPath === '';
+
+    // 根据用户选择的排序方式排序 keys
+    const sortedKeys = [...node.keys].sort((a, b) => {
+      let cmp = 0;
+      switch (sortBy) {
+        case 'name':
+          cmp = a.key.localeCompare(b.key);
+          break;
+        case 'type':
+          cmp = a.type.localeCompare(b.type);
+          break;
+        case 'ttl':
+          const ttlA = a.ttl === -1 ? Infinity : a.ttl;
+          const ttlB = b.ttl === -1 ? Infinity : b.ttl;
+          cmp = ttlA - ttlB;
+          break;
+      }
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
 
     return (
       <>
@@ -1727,7 +1745,7 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
         })}
 
         {/* 渲染当前节点的 keys */}
-        {sortedKeys.map(({ key, type, ttl }) => {
+        {sortedKeys.map(({ key, type }) => {
           // 获取 key 的最后一部分作为显示名
           const parts = key.split(':');
           const displayName = parts[parts.length - 1] || key;
@@ -1760,7 +1778,7 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
 
   // 渲染列表视图
   const renderListView = () => (
-    <>
+    <div className={`list-view-content ${sortAnimating ? 'sort-animating' : ''}`}>
       {filteredKeys.map(({ key, type, ttl }) => (
         <div
           key={key}
@@ -1786,7 +1804,7 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
           </button>
         </div>
       ))}
-    </>
+    </div>
   );
 
   return (
@@ -1891,6 +1909,9 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
                   const [by, order] = e.target.value.split('-') as ['name' | 'type' | 'ttl', 'asc' | 'desc'];
                   setSortBy(by);
                   setSortOrder(order);
+                  // 触发排序动画
+                  setSortAnimating(true);
+                  setTimeout(() => setSortAnimating(false), 300);
                 }}
                 title={settings.language === 'zh-CN' ? '排序方式' : 'Sort by'}
               >
@@ -2304,6 +2325,7 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
         isOpen={showServerInfo}
         onClose={() => setShowServerInfo(false)}
         onExecute={onExecute}
+        onPipeline={onPipeline}
       />
 
       {/* Pub/Sub 面板 */}

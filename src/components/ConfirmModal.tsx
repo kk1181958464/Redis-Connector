@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import Modal from './Modal';
 import './ConfirmModal.css';
 
 interface ConfirmModalProps {
@@ -29,32 +30,31 @@ function ConfirmModal({
 
   useEffect(() => {
     if (isOpen) {
-      confirmBtnRef.current?.focus();
+      setTimeout(() => confirmBtnRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
-      if (e.key === 'Escape') {
-        onCancel();
-      } else if (e.key === 'Enter') {
+      if (e.key === 'Enter') {
+        e.preventDefault();
         onConfirm();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onConfirm, onCancel]);
-
-  if (!isOpen) return null;
+  }, [isOpen, onConfirm]);
 
   return (
-    <div className="confirm-overlay" onClick={onCancel}>
-      <div className={`confirm-modal ${type}`} onClick={(e) => e.stopPropagation()}>
-        <button className="confirm-close" onClick={onCancel}>
-          <X size={18} />
-        </button>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onCancel}
+      width={380}
+      showCloseButton={false}
+      className="confirm-modal-wrapper"
+    >
+      <div className={`confirm-modal ${type}`}>
         <div className="confirm-icon">
           <AlertTriangle size={32} />
         </div>
@@ -77,7 +77,7 @@ function ConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 

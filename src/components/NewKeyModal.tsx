@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import Modal from './Modal';
 import './NewKeyModal.css';
 
 type KeyType = 'string' | 'hash' | 'list' | 'set' | 'zset';
@@ -189,190 +190,187 @@ function NewKeyModal({ isOpen, onClose, onExecute, onSuccess }: NewKeyModalProps
   ];
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="new-key-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{settings.language === 'zh-CN' ? '新建 Key' : 'New Key'}</h2>
-          <button className="close-btn" onClick={onClose}>
-            <X size={20} />
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={settings.language === 'zh-CN' ? '新建 Key' : 'New Key'}
+      width={500}
+      className="new-key-modal"
+    >
+      <form onSubmit={handleSubmit} className="modal-form">
+        {error && <div className="form-error">{error}</div>}
+
+        {/* Key 名称 */}
+        <div className="form-group">
+          <label>{settings.language === 'zh-CN' ? 'Key 名称' : 'Key Name'} *</label>
+          <input
+            type="text"
+            value={keyName}
+            onChange={e => setKeyName(e.target.value)}
+            placeholder={settings.language === 'zh-CN' ? '输入 Key 名称' : 'Enter key name'}
+            autoFocus
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="modal-form">
-          {error && <div className="form-error">{error}</div>}
+        {/* 类型选择 */}
+        <div className="form-group">
+          <label>{settings.language === 'zh-CN' ? '类型' : 'Type'}</label>
+          <div className="type-options">
+            {typeOptions.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                className={`type-option ${keyType === opt.value ? 'active' : ''}`}
+                onClick={() => setKeyType(opt.value)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {/* Key 名称 */}
+        {/* TTL */}
+        <div className="form-group">
+          <label>TTL ({settings.language === 'zh-CN' ? '秒，留空永不过期' : 'seconds, empty for no expiry'})</label>
+          <input
+            type="number"
+            value={ttl}
+            onChange={e => setTtl(e.target.value)}
+            placeholder={settings.language === 'zh-CN' ? '过期时间' : 'Expiry time'}
+            min="0"
+          />
+        </div>
+
+        {/* String 值 */}
+        {keyType === 'string' && (
           <div className="form-group">
-            <label>{settings.language === 'zh-CN' ? 'Key 名称' : 'Key Name'} *</label>
-            <input
-              type="text"
-              value={keyName}
-              onChange={e => setKeyName(e.target.value)}
-              placeholder={settings.language === 'zh-CN' ? '输入 Key 名称' : 'Enter key name'}
-              autoFocus
+            <label>{settings.language === 'zh-CN' ? '值' : 'Value'} *</label>
+            <textarea
+              value={stringValue}
+              onChange={e => setStringValue(e.target.value)}
+              placeholder={settings.language === 'zh-CN' ? '输入字符串值' : 'Enter string value'}
+              rows={4}
             />
           </div>
+        )}
 
-          {/* 类型选择 */}
+        {/* Hash 字段 */}
+        {keyType === 'hash' && (
           <div className="form-group">
-            <label>{settings.language === 'zh-CN' ? '类型' : 'Type'}</label>
-            <div className="type-options">
-              {typeOptions.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={`type-option ${keyType === opt.value ? 'active' : ''}`}
-                  onClick={() => setKeyType(opt.value)}
-                >
-                  {opt.label}
-                </button>
+            <label>{settings.language === 'zh-CN' ? '字段' : 'Fields'} *</label>
+            <div className="dynamic-fields">
+              {hashFields.map((item, index) => (
+                <div key={index} className="field-row">
+                  <input
+                    type="text"
+                    value={item.field}
+                    onChange={e => updateHashField(index, 'field', e.target.value)}
+                    placeholder="Field"
+                  />
+                  <input
+                    type="text"
+                    value={item.value}
+                    onChange={e => updateHashField(index, 'value', e.target.value)}
+                    placeholder="Value"
+                  />
+                  <button
+                    type="button"
+                    className="remove-btn"
+                    onClick={() => removeHashField(index)}
+                    disabled={hashFields.length === 1}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               ))}
+              <button type="button" className="add-field-btn" onClick={addHashField}>
+                <Plus size={14} /> {settings.language === 'zh-CN' ? '添加字段' : 'Add Field'}
+              </button>
             </div>
           </div>
+        )}
 
-          {/* TTL */}
+        {/* List/Set 元素 */}
+        {(keyType === 'list' || keyType === 'set') && (
           <div className="form-group">
-            <label>TTL ({settings.language === 'zh-CN' ? '秒，留空永不过期' : 'seconds, empty for no expiry'})</label>
-            <input
-              type="number"
-              value={ttl}
-              onChange={e => setTtl(e.target.value)}
-              placeholder={settings.language === 'zh-CN' ? '过期时间' : 'Expiry time'}
-              min="0"
-            />
+            <label>{settings.language === 'zh-CN' ? '元素' : 'Items'} *</label>
+            <div className="dynamic-fields">
+              {listItems.map((item, index) => (
+                <div key={index} className="field-row single">
+                  <input
+                    type="text"
+                    value={item}
+                    onChange={e => updateListItem(index, e.target.value)}
+                    placeholder={`${settings.language === 'zh-CN' ? '元素' : 'Item'} ${index + 1}`}
+                  />
+                  <button
+                    type="button"
+                    className="remove-btn"
+                    onClick={() => removeListItem(index)}
+                    disabled={listItems.length === 1}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="add-field-btn" onClick={addListItem}>
+                <Plus size={14} /> {settings.language === 'zh-CN' ? '添加元素' : 'Add Item'}
+              </button>
+            </div>
           </div>
+        )}
 
-          {/* String 值 */}
-          {keyType === 'string' && (
-            <div className="form-group">
-              <label>{settings.language === 'zh-CN' ? '值' : 'Value'} *</label>
-              <textarea
-                value={stringValue}
-                onChange={e => setStringValue(e.target.value)}
-                placeholder={settings.language === 'zh-CN' ? '输入字符串值' : 'Enter string value'}
-                rows={4}
-              />
+        {/* ZSet 成员 */}
+        {keyType === 'zset' && (
+          <div className="form-group">
+            <label>{settings.language === 'zh-CN' ? '成员' : 'Members'} *</label>
+            <div className="dynamic-fields">
+              {zsetMembers.map((item, index) => (
+                <div key={index} className="field-row">
+                  <input
+                    type="text"
+                    value={item.member}
+                    onChange={e => updateZsetMember(index, 'member', e.target.value)}
+                    placeholder="Member"
+                    className="flex-2"
+                  />
+                  <input
+                    type="number"
+                    value={item.score}
+                    onChange={e => updateZsetMember(index, 'score', e.target.value)}
+                    placeholder="Score"
+                    className="flex-1"
+                    step="any"
+                  />
+                  <button
+                    type="button"
+                    className="remove-btn"
+                    onClick={() => removeZsetMember(index)}
+                    disabled={zsetMembers.length === 1}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="add-field-btn" onClick={addZsetMember}>
+                <Plus size={14} /> {settings.language === 'zh-CN' ? '添加成员' : 'Add Member'}
+              </button>
             </div>
-          )}
-
-          {/* Hash 字段 */}
-          {keyType === 'hash' && (
-            <div className="form-group">
-              <label>{settings.language === 'zh-CN' ? '字段' : 'Fields'} *</label>
-              <div className="dynamic-fields">
-                {hashFields.map((item, index) => (
-                  <div key={index} className="field-row">
-                    <input
-                      type="text"
-                      value={item.field}
-                      onChange={e => updateHashField(index, 'field', e.target.value)}
-                      placeholder="Field"
-                    />
-                    <input
-                      type="text"
-                      value={item.value}
-                      onChange={e => updateHashField(index, 'value', e.target.value)}
-                      placeholder="Value"
-                    />
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      onClick={() => removeHashField(index)}
-                      disabled={hashFields.length === 1}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-                <button type="button" className="add-field-btn" onClick={addHashField}>
-                  <Plus size={14} /> {settings.language === 'zh-CN' ? '添加字段' : 'Add Field'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* List/Set 元素 */}
-          {(keyType === 'list' || keyType === 'set') && (
-            <div className="form-group">
-              <label>{settings.language === 'zh-CN' ? '元素' : 'Items'} *</label>
-              <div className="dynamic-fields">
-                {listItems.map((item, index) => (
-                  <div key={index} className="field-row single">
-                    <input
-                      type="text"
-                      value={item}
-                      onChange={e => updateListItem(index, e.target.value)}
-                      placeholder={`${settings.language === 'zh-CN' ? '元素' : 'Item'} ${index + 1}`}
-                    />
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      onClick={() => removeListItem(index)}
-                      disabled={listItems.length === 1}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-                <button type="button" className="add-field-btn" onClick={addListItem}>
-                  <Plus size={14} /> {settings.language === 'zh-CN' ? '添加元素' : 'Add Item'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ZSet 成员 */}
-          {keyType === 'zset' && (
-            <div className="form-group">
-              <label>{settings.language === 'zh-CN' ? '成员' : 'Members'} *</label>
-              <div className="dynamic-fields">
-                {zsetMembers.map((item, index) => (
-                  <div key={index} className="field-row">
-                    <input
-                      type="text"
-                      value={item.member}
-                      onChange={e => updateZsetMember(index, 'member', e.target.value)}
-                      placeholder="Member"
-                      className="flex-2"
-                    />
-                    <input
-                      type="number"
-                      value={item.score}
-                      onChange={e => updateZsetMember(index, 'score', e.target.value)}
-                      placeholder="Score"
-                      className="flex-1"
-                      step="any"
-                    />
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      onClick={() => removeZsetMember(index)}
-                      disabled={zsetMembers.length === 1}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-                <button type="button" className="add-field-btn" onClick={addZsetMember}>
-                  <Plus size={14} /> {settings.language === 'zh-CN' ? '添加成员' : 'Add Member'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="modal-footer">
-            <button type="button" className="cancel-btn" onClick={onClose} disabled={loading}>
-              {t('common.cancel')}
-            </button>
-            <button type="submit" className="submit-btn" disabled={loading}>
-              {loading
-                ? (settings.language === 'zh-CN' ? '创建中...' : 'Creating...')
-                : (settings.language === 'zh-CN' ? '创建' : 'Create')}
-            </button>
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        <div className="modal-footer">
+          <button type="button" className="cancel-btn" onClick={onClose} disabled={loading}>
+            {t('common.cancel')}
+          </button>
+          <button type="submit" className="submit-btn" disabled={loading}>
+            {loading
+              ? (settings.language === 'zh-CN' ? '创建中...' : 'Creating...')
+              : (settings.language === 'zh-CN' ? '创建' : 'Create')}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

@@ -31,6 +31,7 @@ const electronAPI = {
     minimize: () => ipcRenderer.send('window:minimize'),
     maximize: () => ipcRenderer.send('window:maximize'),
     close: () => ipcRenderer.send('window:close'),
+    quit: () => ipcRenderer.send('window:quit'),
     isMaximized: () => ipcRenderer.invoke('window:isMaximized'),
     onMaximizedChange: (callback: (isMaximized: boolean) => void) => {
       const subscription = (_event: any, isMaximized: boolean) => callback(isMaximized);

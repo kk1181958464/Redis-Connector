@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Trash2, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, Star, ChevronUp } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import './CommandConsole.css';
 
@@ -89,9 +89,29 @@ function CommandConsole({ history, onExecute, onClear, disabled }: CommandConsol
   const [selectedSuggestion, setSelectedSuggestion] = useState(0);
   const [favorites, setFavorites] = useState<string[]>(loadFavorites);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { t, settings } = useSettings();
+
+  // 分页配置（控制台使用较小的分页大小，便于浏览）
+  const pageSize = 20;
+  const totalPages = Math.ceil(history.length / pageSize);
+
+  // 当前页显示的历史记录（倒序显示，最新的在最后）
+  const paginatedHistory = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return history.slice(startIndex, endIndex);
+  }, [history, currentPage, pageSize]);
+
+  // 当历史记录变化时，自动跳转到最后一页（显示最新记录）
+  useEffect(() => {
+    const newTotalPages = Math.ceil(history.length / pageSize);
+    if (newTotalPages > 0 && currentPage !== newTotalPages) {
+      setCurrentPage(newTotalPages);
+    }
+  }, [history.length, pageSize]);
 
   // 保存收藏
   useEffect(() => {
@@ -139,12 +159,12 @@ function CommandConsole({ history, onExecute, onClear, disabled }: CommandConsol
     inputRef.current?.focus();
   }, []);
 
-  // 自动滚动到底部
+  // 自动滚动到底部（仅在最后一页时）
   useEffect(() => {
-    if (outputRef.current) {
+    if (outputRef.current && currentPage === totalPages) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [history]);
+  }, [history, currentPage, totalPages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -314,8 +334,8 @@ function CommandConsole({ history, onExecute, onClear, disabled }: CommandConsol
       )}
 
       <div className="console-output" ref={outputRef}>
-        {history.map((entry, index) => (
-          <div key={index} className="output-entry">
+        {paginatedHistory.map((entry, index) => (
+          <div key={`${currentPage}-${index}`} className="output-entry">
             <div className="output-command">
               <span className="prompt">&gt;</span>
               <span className="command-text">{entry.command}</span>
@@ -345,6 +365,50 @@ function CommandConsole({ history, onExecute, onClear, disabled }: CommandConsol
           </div>
         )}
       </div>
+
+      {/* 分页控件 */}
+      {totalPages > 1 && (
+        <div className="console-pagination">
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            title={settings.language === 'zh-CN' ? '第一页' : 'First page'}
+          >
+            «
+          </button>
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            title={settings.language === 'zh-CN' ? '上一页' : 'Previous page'}
+          >
+            ‹
+          </button>
+          <span className="pagination-info">
+            {currentPage} / {totalPages}
+            <span className="pagination-total">
+              ({history.length} {settings.language === 'zh-CN' ? '条记录' : 'records'})
+            </span>
+          </span>
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            title={settings.language === 'zh-CN' ? '下一页' : 'Next page'}
+          >
+            ›
+          </button>
+          <button
+            className="pagination-btn"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+            title={settings.language === 'zh-CN' ? '最后一页' : 'Last page'}
+          >
+            »
+          </button>
+        </div>
+      )}
 
       <form className="console-input" onSubmit={handleSubmit}>
         <span className="prompt">&gt;</span>

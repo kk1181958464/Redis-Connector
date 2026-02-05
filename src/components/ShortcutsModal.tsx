@@ -1,5 +1,6 @@
-import { X, Keyboard } from 'lucide-react';
+import { Keyboard } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import Modal from './Modal';
 import './ShortcutsModal.css';
 
 interface ShortcutsModalProps {
@@ -63,55 +64,47 @@ function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
   const { settings } = useSettings();
   const isZh = settings.language === 'zh-CN';
 
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="shortcuts-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>
-            <Keyboard size={20} />
-            {isZh ? '快捷键' : 'Keyboard Shortcuts'}
-          </h2>
-          <button className="close-btn" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="modal-body">
-          {shortcutGroups.map((group, groupIndex) => (
-            <div key={groupIndex} className="shortcut-group">
-              <h3 className="group-title">{isZh ? group.title.zh : group.title.en}</h3>
-              <div className="shortcut-list">
-                {group.shortcuts.map((shortcut, index) => (
-                  <div key={index} className="shortcut-item">
-                    <div className="shortcut-keys">
-                      {shortcut.keys.map((key, keyIndex) => (
-                        <span key={keyIndex}>
-                          <kbd>{key}</kbd>
-                          {keyIndex < shortcut.keys.length - 1 && <span className="key-separator">+</span>}
-                        </span>
-                      ))}
-                    </div>
-                    <span className="shortcut-desc">
-                      {isZh ? shortcut.description.zh : shortcut.description.en}
-                    </span>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={<><Keyboard size={20} />{isZh ? '快捷键' : 'Keyboard Shortcuts'}</>}
+      width={600}
+      className="shortcuts-modal"
+    >
+      <div className="modal-body">
+        {shortcutGroups.map((group, groupIndex) => (
+          <div key={groupIndex} className="shortcut-group">
+            <h3 className="group-title">{isZh ? group.title.zh : group.title.en}</h3>
+            <div className="shortcut-list">
+              {group.shortcuts.map((shortcut, index) => (
+                <div key={index} className="shortcut-item">
+                  <div className="shortcut-keys">
+                    {shortcut.keys.map((key, keyIndex) => (
+                      <span key={keyIndex}>
+                        <kbd>{key}</kbd>
+                        {keyIndex < shortcut.keys.length - 1 && <span className="key-separator">+</span>}
+                      </span>
+                    ))}
                   </div>
-                ))}
-              </div>
+                  <span className="shortcut-desc">
+                    {isZh ? shortcut.description.zh : shortcut.description.en}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div className="modal-footer">
-          <p className="hint">
-            {isZh
-              ? '提示：在 Mac 上，Ctrl 对应 ⌘ Command 键'
-              : 'Tip: On Mac, Ctrl corresponds to ⌘ Command key'}
-          </p>
-        </div>
+          </div>
+        ))}
       </div>
-    </div>
+
+      <div className="modal-footer">
+        <p className="hint">
+          {isZh
+            ? '提示：在 Mac 上，Ctrl 对应 ⌘ Command 键'
+            : 'Tip: On Mac, Ctrl corresponds to ⌘ Command key'}
+        </p>
+      </div>
+    </Modal>
   );
 }
 

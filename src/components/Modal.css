@@ -1,0 +1,96 @@
+/* Modal 基础组件样式 - 带平滑过渡动画 */
+
+.modal-overlay-base {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(0px);
+  transition: background 0.2s ease-out, backdrop-filter 0.2s ease-out;
+}
+
+.modal-overlay-base.visible {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content-base {
+  position: relative;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: scale(0.95) translateY(-10px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-content-base.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* 退场动画稍快一些 */
+.modal-overlay-base:not(.visible) {
+  transition: background 0.15s ease-in, backdrop-filter 0.15s ease-in;
+}
+
+.modal-content-base:not(.visible) {
+  transition: opacity 0.15s ease-in, transform 0.15s ease-in;
+}
+
+.modal-header-base {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.modal-title-base {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-close-base {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.modal-close-base:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.modal-body-base {
+  flex: 1;
+  overflow-y: auto;
+}

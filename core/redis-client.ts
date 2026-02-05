@@ -25,6 +25,9 @@ const DEFAULT_CONFIG: Partial<RedisConnectionConfig> = {
   commandTimeout: 10000,
 };
 
+// 心跳检测间隔（毫秒）
+const HEARTBEAT_INTERVAL = 30000;
+
 // 命令回调
 interface PendingCommand {
   resolve: (value: RespValue) => void;
@@ -40,6 +43,7 @@ export class RedisClient extends EventEmitter {
   private pendingCommands: PendingCommand[] = [];
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 3;
+  private heartbeatTimer: NodeJS.Timeout | null = null;
 
   constructor(config: RedisConnectionConfig) {
     super();
@@ -118,6 +122,7 @@ export class RedisClient extends EventEmitter {
 
             this.setStatus('connected');
             this.reconnectAttempts = 0;
+            this.startHeartbeat();
             resolve();
           } catch (err) {
             this.setStatus('error');
@@ -154,6 +159,7 @@ export class RedisClient extends EventEmitter {
 
             this.setStatus('connected');
             this.reconnectAttempts = 0;
+            this.startHeartbeat();
             resolve();
           } catch (err) {
             this.setStatus('error');
@@ -181,6 +187,9 @@ export class RedisClient extends EventEmitter {
   private setupSocketListeners(): void {
     if (!this.socket) return;
 
+    // 启用 TCP KeepAlive，检测死连接
+    this.socket.setKeepAlive(true, 10000);
+
     // 接收数据
     this.socket.on('data', (data: Buffer) => {
       this.parser.append(data);
@@ -189,6 +198,7 @@ export class RedisClient extends EventEmitter {
 
     // 连接关闭
     this.socket.on('close', (hadError: boolean) => {
+      this.stopHeartbeat();
       this.setStatus('disconnected');
       this.rejectAllPending(new Error('Connection closed'));
       this.emit('close', hadError);
@@ -196,7 +206,17 @@ export class RedisClient extends EventEmitter {
 
     // 错误处理
     this.socket.on('error', (err: Error) => {
+      this.stopHeartbeat();
+      this.setStatus('disconnected');
       this.emit('error', err);
+    });
+
+    // 连接超时（空闲超时）
+    this.socket.on('timeout', () => {
+      this.stopHeartbeat();
+      this.setStatus('disconnected');
+      this.socket?.destroy();
+      this.emit('error', new Error('Connection timeout (idle)'));
     });
   }
 
@@ -417,9 +437,10 @@ export class RedisClient extends EventEmitter {
    * 断开连接
    */
   async disconnect(): Promise<void> {
+    this.stopHeartbeat();
     if (this.socket) {
       this.rejectAllPending(new Error('Client disconnecting'));
-      
+
       return new Promise((resolve) => {
         this.socket!.once('close', () => {
           this.socket = null;
@@ -435,12 +456,46 @@ export class RedisClient extends EventEmitter {
    * 强制关闭连接
    */
   destroy(): void {
+    this.stopHeartbeat();
     if (this.socket) {
       this.rejectAllPending(new Error('Client destroyed'));
       this.socket.destroy();
       this.socket = null;
       this.parser.reset();
       this.setStatus('disconnected');
+    }
+  }
+
+  /**
+   * 启动心跳检测
+   */
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(async () => {
+      if (this.status !== 'connected') {
+        this.stopHeartbeat();
+        return;
+      }
+
+      try {
+        await this.ping();
+      } catch (err) {
+        // PING 失败，连接可能已断开
+        console.error('Heartbeat failed:', err);
+        this.stopHeartbeat();
+        this.setStatus('disconnected');
+        this.socket?.destroy();
+      }
+    }, HEARTBEAT_INTERVAL);
+  }
+
+  /**
+   * 停止心跳检测
+   */
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
     }
   }
 

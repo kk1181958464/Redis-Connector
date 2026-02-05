@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
-import { X, Download, Upload, FileJson, Terminal, FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { Download, Upload, FileJson, Terminal, FileSpreadsheet, AlertTriangle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import Modal from './Modal';
 import './ExportImportModal.css';
 
 type ExportFormat = 'json' | 'redis' | 'csv';
@@ -402,202 +403,197 @@ function ExportImportModal({ isOpen, mode, onClose, onExecute, keys, onSuccess }
   const isExport = mode === 'export';
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="export-import-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>
-            {isExport
-              ? (settings.language === 'zh-CN' ? '导出 Keys' : 'Export Keys')
-              : (settings.language === 'zh-CN' ? '导入 Keys' : 'Import Keys')}
-          </h2>
-          <button className="close-btn" onClick={onClose}>
-            <X size={20} />
-          </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isExport
+        ? (settings.language === 'zh-CN' ? '导出 Keys' : 'Export Keys')
+        : (settings.language === 'zh-CN' ? '导入 Keys' : 'Import Keys')}
+      width={500}
+      className="export-import-modal"
+    >
+      <div className="modal-body">
+        {error && <div className="form-error">{error}</div>}
+
+        {/* 格式选择 */}
+        <div className="form-group">
+          <label>{settings.language === 'zh-CN' ? '格式' : 'Format'}</label>
+          <div className="format-options">
+            <button
+              type="button"
+              className={`format-option ${format === 'json' ? 'active' : ''}`}
+              onClick={() => setFormat('json')}
+            >
+              <FileJson size={18} />
+              <span>JSON</span>
+            </button>
+            {isExport && (
+              <button
+                type="button"
+                className={`format-option ${format === 'csv' ? 'active' : ''}`}
+                onClick={() => setFormat('csv')}
+              >
+                <FileSpreadsheet size={18} />
+                <span>CSV</span>
+              </button>
+            )}
+            <button
+              type="button"
+              className={`format-option ${format === 'redis' ? 'active' : ''}`}
+              onClick={() => setFormat('redis')}
+            >
+              <Terminal size={18} />
+              <span>Redis Commands</span>
+            </button>
+          </div>
         </div>
 
-        <div className="modal-body">
-          {error && <div className="form-error">{error}</div>}
+        {isExport ? (
+          <>
+            <div className="export-info">
+              <p>
+                {settings.language === 'zh-CN'
+                  ? `将导出当前列表中的 ${keys.length} 个 Key`
+                  : `Will export ${keys.length} keys from current list`}
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* 冲突处理策略（仅 JSON 格式） */}
+            {format === 'json' && (
+              <div className="form-group">
+                <label>
+                  <AlertTriangle size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
+                  {settings.language === 'zh-CN' ? 'Key 冲突处理' : 'Conflict Resolution'}
+                </label>
+                <div className="conflict-options">
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="conflict"
+                      value="skip"
+                      checked={conflictStrategy === 'skip'}
+                      onChange={() => setConflictStrategy('skip')}
+                    />
+                    <span className="radio-label">
+                      {settings.language === 'zh-CN' ? '跳过已存在' : 'Skip existing'}
+                    </span>
+                    <span className="radio-desc">
+                      {settings.language === 'zh-CN' ? '保留原有数据' : 'Keep original data'}
+                    </span>
+                  </label>
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="conflict"
+                      value="overwrite"
+                      checked={conflictStrategy === 'overwrite'}
+                      onChange={() => setConflictStrategy('overwrite')}
+                    />
+                    <span className="radio-label">
+                      {settings.language === 'zh-CN' ? '覆盖已存在' : 'Overwrite existing'}
+                    </span>
+                    <span className="radio-desc">
+                      {settings.language === 'zh-CN' ? '用导入数据替换' : 'Replace with imported data'}
+                    </span>
+                  </label>
+                  <label className="radio-option">
+                    <input
+                      type="radio"
+                      name="conflict"
+                      value="rename"
+                      checked={conflictStrategy === 'rename'}
+                      onChange={() => setConflictStrategy('rename')}
+                    />
+                    <span className="radio-label">
+                      {settings.language === 'zh-CN' ? '重命名导入' : 'Rename imported'}
+                    </span>
+                    <span className="radio-desc">
+                      {settings.language === 'zh-CN' ? '添加后缀 _imported_N' : 'Add suffix _imported_N'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
 
-          {/* 格式选择 */}
-          <div className="form-group">
-            <label>{settings.language === 'zh-CN' ? '格式' : 'Format'}</label>
-            <div className="format-options">
-              <button
-                type="button"
-                className={`format-option ${format === 'json' ? 'active' : ''}`}
-                onClick={() => setFormat('json')}
-              >
-                <FileJson size={18} />
-                <span>JSON</span>
-              </button>
-              {isExport && (
-                <button
-                  type="button"
-                  className={`format-option ${format === 'csv' ? 'active' : ''}`}
-                  onClick={() => setFormat('csv')}
-                >
-                  <FileSpreadsheet size={18} />
-                  <span>CSV</span>
-                </button>
+            <div className="form-group">
+              <label>{settings.language === 'zh-CN' ? '选择文件' : 'Select File'}</label>
+              <input
+                type="file"
+                accept={format === 'json' ? '.json' : '.txt'}
+                onChange={handleFileSelect}
+                className="file-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>{settings.language === 'zh-CN' ? '或粘贴数据' : 'Or Paste Data'}</label>
+              <textarea
+                value={importData}
+                onChange={e => setImportData(e.target.value)}
+                placeholder={format === 'json'
+                  ? '[{"key": "...", "type": "string", "ttl": -1, "value": "..."}]'
+                  : 'SET key value\nHSET hash field value\n...'}
+                rows={8}
+              />
+            </div>
+          </>
+        )}
+
+        {/* 导入统计 */}
+        {importStats && (
+          <div className="import-stats">
+            <div className="stats-title">
+              {settings.language === 'zh-CN' ? '导入完成' : 'Import Complete'}
+            </div>
+            <div className="stats-items">
+              <div className="stats-item success">
+                <span className="stats-value">{importStats.imported}</span>
+                <span className="stats-label">{settings.language === 'zh-CN' ? '已导入' : 'Imported'}</span>
+              </div>
+              {importStats.skipped > 0 && (
+                <div className="stats-item warning">
+                  <span className="stats-value">{importStats.skipped}</span>
+                  <span className="stats-label">{settings.language === 'zh-CN' ? '已跳过' : 'Skipped'}</span>
+                </div>
               )}
-              <button
-                type="button"
-                className={`format-option ${format === 'redis' ? 'active' : ''}`}
-                onClick={() => setFormat('redis')}
-              >
-                <Terminal size={18} />
-                <span>Redis Commands</span>
-              </button>
+              {importStats.renamed > 0 && (
+                <div className="stats-item info">
+                  <span className="stats-value">{importStats.renamed}</span>
+                  <span className="stats-label">{settings.language === 'zh-CN' ? '已重命名' : 'Renamed'}</span>
+                </div>
+              )}
             </div>
           </div>
+        )}
 
-          {isExport ? (
-            <>
-              <div className="export-info">
-                <p>
-                  {settings.language === 'zh-CN'
-                    ? `将导出当前列表中的 ${keys.length} 个 Key`
-                    : `Will export ${keys.length} keys from current list`}
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* 冲突处理策略（仅 JSON 格式） */}
-              {format === 'json' && (
-                <div className="form-group">
-                  <label>
-                    <AlertTriangle size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-                    {settings.language === 'zh-CN' ? 'Key 冲突处理' : 'Conflict Resolution'}
-                  </label>
-                  <div className="conflict-options">
-                    <label className="radio-option">
-                      <input
-                        type="radio"
-                        name="conflict"
-                        value="skip"
-                        checked={conflictStrategy === 'skip'}
-                        onChange={() => setConflictStrategy('skip')}
-                      />
-                      <span className="radio-label">
-                        {settings.language === 'zh-CN' ? '跳过已存在' : 'Skip existing'}
-                      </span>
-                      <span className="radio-desc">
-                        {settings.language === 'zh-CN' ? '保留原有数据' : 'Keep original data'}
-                      </span>
-                    </label>
-                    <label className="radio-option">
-                      <input
-                        type="radio"
-                        name="conflict"
-                        value="overwrite"
-                        checked={conflictStrategy === 'overwrite'}
-                        onChange={() => setConflictStrategy('overwrite')}
-                      />
-                      <span className="radio-label">
-                        {settings.language === 'zh-CN' ? '覆盖已存在' : 'Overwrite existing'}
-                      </span>
-                      <span className="radio-desc">
-                        {settings.language === 'zh-CN' ? '用导入数据替换' : 'Replace with imported data'}
-                      </span>
-                    </label>
-                    <label className="radio-option">
-                      <input
-                        type="radio"
-                        name="conflict"
-                        value="rename"
-                        checked={conflictStrategy === 'rename'}
-                        onChange={() => setConflictStrategy('rename')}
-                      />
-                      <span className="radio-label">
-                        {settings.language === 'zh-CN' ? '重命名导入' : 'Rename imported'}
-                      </span>
-                      <span className="radio-desc">
-                        {settings.language === 'zh-CN' ? '添加后缀 _imported_N' : 'Add suffix _imported_N'}
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              <div className="form-group">
-                <label>{settings.language === 'zh-CN' ? '选择文件' : 'Select File'}</label>
-                <input
-                  type="file"
-                  accept={format === 'json' ? '.json' : '.txt'}
-                  onChange={handleFileSelect}
-                  className="file-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>{settings.language === 'zh-CN' ? '或粘贴数据' : 'Or Paste Data'}</label>
-                <textarea
-                  value={importData}
-                  onChange={e => setImportData(e.target.value)}
-                  placeholder={format === 'json'
-                    ? '[{"key": "...", "type": "string", "ttl": -1, "value": "..."}]'
-                    : 'SET key value\nHSET hash field value\n...'}
-                  rows={8}
-                />
-              </div>
-            </>
-          )}
-
-          {/* 导入统计 */}
-          {importStats && (
-            <div className="import-stats">
-              <div className="stats-title">
-                {settings.language === 'zh-CN' ? '导入完成' : 'Import Complete'}
-              </div>
-              <div className="stats-items">
-                <div className="stats-item success">
-                  <span className="stats-value">{importStats.imported}</span>
-                  <span className="stats-label">{settings.language === 'zh-CN' ? '已导入' : 'Imported'}</span>
-                </div>
-                {importStats.skipped > 0 && (
-                  <div className="stats-item warning">
-                    <span className="stats-value">{importStats.skipped}</span>
-                    <span className="stats-label">{settings.language === 'zh-CN' ? '已跳过' : 'Skipped'}</span>
-                  </div>
-                )}
-                {importStats.renamed > 0 && (
-                  <div className="stats-item info">
-                    <span className="stats-value">{importStats.renamed}</span>
-                    <span className="stats-label">{settings.language === 'zh-CN' ? '已重命名' : 'Renamed'}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 进度条 */}
-          {loading && (
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
-              <span className="progress-text">{progress}%</span>
-            </div>
-          )}
-        </div>
-
-        <div className="modal-footer">
-          <button className="cancel-btn" onClick={onClose} disabled={loading}>
-            {settings.language === 'zh-CN' ? '取消' : 'Cancel'}
-          </button>
-          <button
-            className="submit-btn"
-            onClick={isExport ? handleExport : handleImport}
-            disabled={loading || (!isExport && !importData.trim())}
-          >
-            {loading
-              ? (settings.language === 'zh-CN' ? '处理中...' : 'Processing...')
-              : isExport
-                ? (settings.language === 'zh-CN' ? '导出' : 'Export')
-                : (settings.language === 'zh-CN' ? '导入' : 'Import')}
-            {isExport ? <Download size={16} /> : <Upload size={16} />}
-          </button>
-        </div>
+        {/* 进度条 */}
+        {loading && (
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+            <span className="progress-text">{progress}%</span>
+          </div>
+        )}
       </div>
-    </div>
+
+      <div className="modal-footer">
+        <button className="cancel-btn" onClick={onClose} disabled={loading}>
+          {settings.language === 'zh-CN' ? '取消' : 'Cancel'}
+        </button>
+        <button
+          className="submit-btn"
+          onClick={isExport ? handleExport : handleImport}
+          disabled={loading || (!isExport && !importData.trim())}
+        >
+          {loading
+            ? (settings.language === 'zh-CN' ? '处理中...' : 'Processing...')
+            : isExport
+              ? (settings.language === 'zh-CN' ? '导出' : 'Export')
+              : (settings.language === 'zh-CN' ? '导入' : 'Import')}
+          {isExport ? <Download size={16} /> : <Upload size={16} />}
+        </button>
+      </div>
+    </Modal>
   );
 }
 
