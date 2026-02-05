@@ -1,6 +1,6 @@
 # Redis Connector
 
-⚙️ 机械神教·数据圣器 - 自研 RESP 协议的 Redis GUI 客户端
+自研 RESP 协议的 Redis GUI 客户端
 
 ## 是什么
 
@@ -19,6 +19,10 @@
 - 🗂️ **Key 浏览器**：可视化浏览、搜索过滤
 - 📊 **数据查看**：支持 String/List/Set/ZSet/Hash 类型
 - 🎨 **暗色主题**：护眼设计
+
+## 界面预览
+
+![Redis Connector 界面](./screenshot.png)
 
 ## 快速开始
 
