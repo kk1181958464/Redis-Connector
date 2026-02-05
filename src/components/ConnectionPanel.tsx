@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, MoreVertical, Pencil, Info, RefreshCw, Square, Trash2, ChevronRight, ChevronDown, Folder } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import { useToast } from './Toast';
 import ConnectionModal from './ConnectionModal';
 import ConnectionInfoModal from './ConnectionInfoModal';
 import ConfirmModal from './ConfirmModal';
@@ -56,6 +57,7 @@ function ConnectionPanel({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['default']));
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { t, settings } = useSettings();
+  const { showToast } = useToast();
 
   // 按名称前缀分组连接（使用 : 或 / 作为分隔符）
   const groupedConnections = useMemo(() => {
@@ -182,7 +184,12 @@ function ConnectionPanel({
         } : undefined,
         existingId: conn.id,
       };
-      await onConnect(config);
+
+      const result = await onConnect(config);
+      if (!result.success) {
+        // 连接失败，显示错误提示
+        showToast(result.error || (settings.language === 'zh-CN' ? '连接失败' : 'Connection failed'), 'error');
+      }
     }
   };
 

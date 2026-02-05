@@ -5,8 +5,7 @@
   justify-content: space-between;
   align-items: center;
   height: 32px;
-  background: #1e1e1e;
-  border-bottom: 1px solid #333;
+  background: var(--bg-secondary);
   user-select: none;
   flex-shrink: 0;
 }
@@ -36,9 +35,19 @@
   object-fit: contain;
 }
 
+/* 深色主题下反转图标颜色 */
+.title-bar-icon img.dark {
+  filter: invert(1) brightness(1.2);
+}
+
+/* 浅色主题保持原样 */
+.title-bar-icon img.light {
+  filter: none;
+}
+
 .title-bar-text {
   font-size: 12px;
-  color: #ccc;
+  color: var(--text-secondary);
   font-weight: 400;
 }
 
@@ -54,7 +63,7 @@
   height: 100%;
   border: none;
   background: transparent;
-  color: #ccc;
+  color: var(--text-secondary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -63,11 +72,11 @@
 }
 
 .title-bar-button:hover {
-  background: #333;
+  background: var(--bg-elevated);
 }
 
 .title-bar-button:active {
-  background: #444;
+  background: var(--border);
 }
 
 .title-bar-close:hover {

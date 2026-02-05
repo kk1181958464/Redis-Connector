@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Minus, Square, X, Copy } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
 import './TitleBar.css';
 
 declare global {
@@ -22,6 +23,7 @@ declare global {
 
 export function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
+  const { effectiveTheme } = useSettings();
 
   useEffect(() => {
     // 获取初始状态
@@ -53,9 +55,8 @@ export function TitleBar() {
     <div className="title-bar">
       <div className="title-bar-drag">
         <div className="title-bar-icon">
-          <img src="icon.png" alt="Redis Connector" />
+          <img src="icon.png" alt="Redis Connector" className={effectiveTheme} />
         </div>
-        <span className="title-bar-text">Redis Connector</span>
       </div>
       <div className="title-bar-controls">
         <button
