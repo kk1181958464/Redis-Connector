@@ -5,6 +5,7 @@ release/
 .DS_Store
 Thumbs.db
 *.local
+.idea/
 CLAUDE.md
 DESIGN.md
 AGENTS.md
