@@ -111,6 +111,9 @@
 .modal-body-base {
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* 调整大小手柄 */

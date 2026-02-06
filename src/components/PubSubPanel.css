@@ -3,6 +3,8 @@
   flex: 1;
   display: flex;
   overflow: hidden;
+  min-height: 0;
+  height: 100%;
 }
 
 /* 左侧边栏 */
