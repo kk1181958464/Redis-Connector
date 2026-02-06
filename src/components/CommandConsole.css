@@ -307,6 +307,44 @@
   border-left-color: var(--error);
 }
 
+/* JSON 树状结果样式 */
+.output-result.json-result {
+  padding: 0;
+  overflow: hidden;
+}
+
+.output-result.json-result .json-tree-view {
+  border-radius: 0;
+}
+
+.output-result.json-result .json-tree-toolbar {
+  border-radius: 0;
+  padding: 6px 10px;
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.output-result.json-result .json-tree-toolbar .view-toggle {
+  display: inline-flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.output-result.json-result .json-tree-toolbar .view-toggle button {
+  display: inline-flex;
+  padding: 4px 12px;
+  white-space: nowrap;
+  min-width: fit-content;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.output-result.json-result .json-tree-content {
+  max-height: 300px;
+  overflow: auto;
+}
+
 .console-input {
   display: flex;
   align-items: center;

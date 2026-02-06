@@ -4,7 +4,7 @@ import {
   FileText, List, Target, BarChart3, Hash, Waves, HelpCircle,
   Trash2, Pencil, FolderTree, ListOrdered, RefreshCw, FolderOpen,
   ChevronRight, ChevronDown, Clock, Hourglass, XCircle, Calendar, Plus, Copy, Check,
-  Download, Upload, Server, Files, Radio, Activity
+  Download, Upload, Server, Files, Radio, Activity, Database, HardDrive, Code
 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useToast } from './Toast';
@@ -15,6 +15,10 @@ import ServerInfoModal from './ServerInfoModal';
 import Modal from './Modal';
 import PubSubPanel from './PubSubPanel';
 import PerformanceChart from './PerformanceChart';
+import SlowLogPanel from './SlowLogPanel';
+import BigKeyPanel from './BigKeyPanel';
+import MemoryAnalyzer from './MemoryAnalyzer';
+import LuaEditor from './LuaEditor';
 import './KeyBrowser.css';
 
 interface KeyBrowserProps {
@@ -106,6 +110,18 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
 
   // 性能监控面板状态
   const [showPerformance, setShowPerformance] = useState(false);
+
+  // 慢查询分析面板状态
+  const [showSlowLog, setShowSlowLog] = useState(false);
+
+  // 大 Key 分析面板状态
+  const [showBigKey, setShowBigKey] = useState(false);
+
+  // 内存分析面板状态
+  const [showMemory, setShowMemory] = useState(false);
+
+  // Lua 编辑器面板状态
+  const [showLuaEditor, setShowLuaEditor] = useState(false);
 
   // 批量设置 TTL 弹窗状态
   const [showBatchTTL, setShowBatchTTL] = useState(false);
@@ -1907,6 +1923,34 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
           >
             <Radio size={14} />
           </button>
+          <button
+            className="server-info-btn"
+            onClick={() => setShowSlowLog(true)}
+            title={settings.language === 'zh-CN' ? '慢查询分析' : 'Slow Log'}
+          >
+            <Clock size={14} />
+          </button>
+          <button
+            className="server-info-btn"
+            onClick={() => setShowBigKey(true)}
+            title={settings.language === 'zh-CN' ? '大 Key 分析' : 'Big Key Analysis'}
+          >
+            <Database size={14} />
+          </button>
+          <button
+            className="server-info-btn"
+            onClick={() => setShowMemory(true)}
+            title={settings.language === 'zh-CN' ? '内存分析' : 'Memory Analysis'}
+          >
+            <HardDrive size={14} />
+          </button>
+          <button
+            className="server-info-btn"
+            onClick={() => setShowLuaEditor(true)}
+            title={settings.language === 'zh-CN' ? 'Lua 编辑器' : 'Lua Editor'}
+          >
+            <Code size={14} />
+          </button>
         </div>
         <div className="search-bar">
           <input
@@ -2411,7 +2455,6 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
         isOpen={showServerInfo}
         onClose={() => setShowServerInfo(false)}
         onExecute={onExecute}
-        onPipeline={onPipeline}
       />
 
       {/* Pub/Sub 面板 */}
@@ -2426,6 +2469,36 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
       <PerformanceChart
         isOpen={showPerformance}
         onClose={() => setShowPerformance(false)}
+        onExecute={onExecute}
+      />
+
+      {/* 慢查询分析面板 */}
+      <SlowLogPanel
+        isOpen={showSlowLog}
+        onClose={() => setShowSlowLog(false)}
+        onExecute={onExecute}
+      />
+
+      {/* 大 Key 分析面板 */}
+      <BigKeyPanel
+        isOpen={showBigKey}
+        onClose={() => setShowBigKey(false)}
+        onExecute={onExecute}
+        onPipeline={onPipeline}
+      />
+
+      {/* 内存分析面板 */}
+      <MemoryAnalyzer
+        isOpen={showMemory}
+        onClose={() => setShowMemory(false)}
+        onExecute={onExecute}
+        onPipeline={onPipeline}
+      />
+
+      {/* Lua 编辑器 */}
+      <LuaEditor
+        isOpen={showLuaEditor}
+        onClose={() => setShowLuaEditor(false)}
         onExecute={onExecute}
       />
     </div>

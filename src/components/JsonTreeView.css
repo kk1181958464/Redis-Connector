@@ -1,0 +1,265 @@
+/* JsonTreeView 样式 */
+.json-tree-view {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.json-tree-view.simple {
+  padding: 0;
+  background: transparent;
+}
+
+/* 工具栏 */
+.json-tree-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.view-toggle {
+  display: inline-flex;
+  flex-direction: row;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  overflow: visible;
+}
+
+.view-toggle button {
+  padding: 4px 12px;
+  min-width: fit-content;
+  font-size: 11px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.view-toggle button:hover {
+  color: var(--text-primary);
+}
+
+.view-toggle button.active {
+  background: var(--accent);
+  color: white;
+}
+
+.copy-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.copy-all-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.copy-all-btn.copied {
+  background: var(--success);
+  color: white;
+  border-color: var(--success);
+}
+
+/* 内容区域 */
+.json-tree-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 0;
+}
+
+.tree-container {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 树节点 */
+.tree-node {
+  user-select: none;
+}
+
+.tree-node-row {
+  display: flex;
+  align-items: center;
+  padding: 2px 12px 2px 0;
+  cursor: default;
+  transition: background var(--transition-fast);
+  border-radius: 2px;
+}
+
+.tree-node-row.expandable {
+  cursor: pointer;
+}
+
+.tree-node-row:hover {
+  background: var(--bg-elevated);
+}
+
+.tree-node-row:hover .tree-copy-btn {
+  opacity: 1;
+}
+
+/* 展开/折叠图标 */
+.tree-toggle {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.toggle-placeholder {
+  width: 14px;
+}
+
+/* Key */
+.tree-key {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.key-name {
+  color: #9cdcfe;
+}
+
+.key-index {
+  color: var(--text-muted);
+}
+
+.key-colon {
+  color: var(--text-muted);
+  margin: 0 4px;
+}
+
+/* 值 */
+.tree-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-value.type-string {
+  color: #ce9178;
+}
+
+.tree-value.type-number {
+  color: #b5cea8;
+}
+
+.tree-value.type-boolean {
+  color: #569cd6;
+}
+
+.tree-value.type-null,
+.tree-value.type-undefined {
+  color: #808080;
+  font-style: italic;
+}
+
+.tree-value.type-array,
+.tree-value.type-object {
+  color: var(--text-muted);
+}
+
+/* 复制按钮 */
+.tree-copy-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.tree-copy-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--accent);
+}
+
+.tree-copy-btn.copied {
+  opacity: 1;
+  color: var(--success);
+}
+
+/* 子节点 */
+.tree-children {
+  /* 子节点缩进由 paddingLeft 控制 */
+}
+
+.tree-bracket {
+  padding: 2px 12px 2px 0;
+  color: var(--text-muted);
+}
+
+/* 原始 JSON 视图 */
+.raw-json {
+  margin: 0;
+  padding: 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 简单值显示 */
+.simple-value {
+  margin: 0;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+}
+
+.simple-value.type-string {
+  color: #ce9178;
+}
+
+.simple-value.type-number {
+  color: #b5cea8;
+}
+
+.simple-value.type-boolean {
+  color: #569cd6;
+}
+
+.simple-value.type-null,
+.simple-value.type-undefined {
+  color: #808080;
+  font-style: italic;
+}

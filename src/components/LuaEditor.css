@@ -1,0 +1,414 @@
+/* LuaEditor 样式 */
+.lua-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+.lua-editor-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-script-name {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+/* 工具栏 */
+.lua-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.lua-toolbar .toolbar-left,
+.lua-toolbar .toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lua-toolbar .toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lua-toolbar .toolbar-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.lua-toolbar .toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lua-toolbar .toolbar-btn.icon-only {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.lua-toolbar .toolbar-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.lua-toolbar .toolbar-btn.execute-btn {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+  padding: 8px 16px;
+}
+
+.lua-toolbar .toolbar-btn.execute-btn:hover:not(:disabled) {
+  background: #2ea043;
+  border-color: #2ea043;
+}
+
+.lua-toolbar .toolbar-btn.copy-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.lua-toolbar .toolbar-btn.copy-btn.copied {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.script-count {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  background: var(--accent);
+  color: white;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.save-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.script-name-input {
+  width: 100px;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.script-name-input::placeholder {
+  color: var(--text-muted);
+}
+
+.script-name-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* 当前脚本名称标签 */
+.current-script-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+/* 打开脚本按钮包装器 */
+.open-script-wrapper {
+  position: relative;
+}
+
+.lua-toolbar .toolbar-btn.active {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 脚本列表下拉 */
+.script-list-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 280px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.script-list-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.script-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--border);
+}
+
+.script-list-item:last-child {
+  border-bottom: none;
+}
+
+.script-list-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.script-list-item.active {
+  background: var(--accent-muted);
+}
+
+.script-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.script-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.script-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.script-delete-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.script-list-item:hover .script-delete-btn {
+  opacity: 1;
+}
+
+.script-delete-btn:hover {
+  background: var(--error-muted);
+  color: var(--error);
+}
+
+/* 编辑器容器 - CodeMirror */
+.editor-container {
+  flex: 1;
+  min-height: 200px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+
+.editor-container .code-editor {
+  height: 100%;
+}
+
+.editor-container .cm-editor {
+  height: 100%;
+  font-size: 13px;
+}
+
+.editor-container .cm-scroller {
+  overflow: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.editor-container .cm-focused {
+  outline: none;
+}
+
+/* CodeMirror 语法高亮颜色覆盖 */
+.editor-container .cm-editor .ͼb {
+  color: #c586c0; /* 关键字 */
+}
+
+.editor-container .cm-editor .ͼc {
+  color: #6a9955; /* 注释 */
+}
+
+.editor-container .cm-editor .ͼd {
+  color: #ce9178; /* 字符串 */
+}
+
+.editor-container .cm-editor .ͼe {
+  color: #b5cea8; /* 数字 */
+}
+
+.editor-container .cm-editor .ͼm {
+  color: #dcdcaa; /* 函数 */
+}
+
+/* 参数区域 */
+.params-section {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.param-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-group label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.param-hint {
+  font-weight: 400;
+  text-transform: none;
+  color: var(--text-muted);
+}
+
+.param-group input {
+  padding: 8px 12px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+.param-group input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-muted);
+}
+
+/* 结果区域 */
+.result-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  max-height: 200px;
+  flex-shrink: 0;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.result-status {
+  font-weight: 500;
+  text-transform: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.result-status.success {
+  background: var(--success-muted);
+  color: var(--success);
+}
+
+.result-status.error {
+  background: var(--error-muted);
+  color: var(--error);
+}
+
+.result-content {
+  flex: 1;
+  padding: 12px 16px;
+  overflow: auto;
+  background: var(--bg-tertiary);
+}
+
+.result-content pre {
+  margin: 0;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.result-content.error pre {
+  color: var(--error);
+}
+
+.result-placeholder {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.error-message {
+  color: var(--error);
+}

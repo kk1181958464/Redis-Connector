@@ -19,7 +19,8 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .browser-header h3 {
@@ -75,6 +76,26 @@
   background: var(--bg-tertiary);
   color: var(--accent);
   border-color: var(--accent);
+}
+
+/* 工具按钮分隔线 */
+.header-left .server-info-btn:nth-child(4) {
+  margin-left: 4px;
+}
+
+.header-left .server-info-btn:nth-child(4)::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+}
+
+.header-left .server-info-btn {
+  position: relative;
 }
 
 .search-bar {

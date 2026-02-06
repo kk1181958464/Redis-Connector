@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Trash2, Star, ChevronUp } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { debounce } from '../utils';
+import JsonTreeView from './JsonTreeView';
 import './CommandConsole.css';
 
 // Redis 命令列表
@@ -266,6 +267,16 @@ function CommandConsole({ history, onExecute, onClear, disabled }: CommandConsol
     return `"${str}"`;
   };
 
+  // 检测结果是否适合用 JsonTreeView 展示
+  const isJsonViewable = (result: any): boolean => {
+    if (result === null || result === undefined) return false;
+    if (result.error) return false;
+    if (typeof result === 'string' || typeof result === 'number' || typeof result === 'boolean') return false;
+    if (Array.isArray(result) && result.length > 0) return true;
+    if (typeof result === 'object' && Object.keys(result).length > 0) return true;
+    return false;
+  };
+
   const formatResult = (result: any): string => {
     if (result === null) return '(nil)';
     if (result === undefined) return '(undefined)';
@@ -354,9 +365,15 @@ function CommandConsole({ history, onExecute, onClear, disabled }: CommandConsol
               </button>
               <span className="duration">{entry.duration}ms</span>
             </div>
-            <pre className={`output-result ${entry.result?.error ? 'error' : ''}`}>
-              {formatResult(entry.result)}
-            </pre>
+            {isJsonViewable(entry.result) ? (
+              <div className="output-result json-result">
+                <JsonTreeView data={entry.result} defaultExpanded={false} maxDepth={5} />
+              </div>
+            ) : (
+              <pre className={`output-result ${entry.result?.error ? 'error' : ''}`}>
+                {formatResult(entry.result)}
+              </pre>
+            )}
           </div>
         ))}
         {executing && (
