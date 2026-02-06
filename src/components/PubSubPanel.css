@@ -1,56 +1,4 @@
 /* PubSubPanel 样式 */
-.pubsub-panel {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  width: 800px;
-  max-width: 95vw;
-  height: 600px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow-lg);
-  animation: modalSlideIn 0.25s ease;
-}
-
-.pubsub-panel .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-tertiary);
-}
-
-.pubsub-panel .modal-header h2 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pubsub-panel .close-btn {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 20px;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.pubsub-panel .close-btn:hover {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
-
 .pubsub-content {
   flex: 1;
   display: flex;
@@ -207,13 +155,50 @@
 }
 
 .subscribed-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
   margin-top: 10px;
 }
 
+.subscribed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.subscribed-header span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.unsubscribe-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 10px;
+  background: var(--error-muted);
+  color: var(--error);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.unsubscribe-all-btn:hover {
+  background: var(--error);
+  color: white;
+}
+
+.subscribed-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .subscribed-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   padding: 3px 8px;
   background: var(--accent-muted);
@@ -221,11 +206,42 @@
   border-radius: var(--radius-sm);
 }
 
-.subscribe-note {
+.remove-tag-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  border-radius: 50%;
+  opacity: 0.7;
+  transition: all var(--transition-normal);
+}
+
+.remove-tag-btn:hover {
+  background: var(--accent);
+  color: white;
+  opacity: 1;
+}
+
+.subscribed-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  background: var(--success);
+  color: white;
+  border-radius: var(--radius-sm);
+  margin-left: auto;
+}
+
+.message-count {
   font-size: 11px;
   color: var(--text-muted);
-  margin-top: 10px;
-  line-height: 1.4;
+  font-weight: normal;
+  margin-left: 6px;
 }
 
 /* 右侧主区域 */

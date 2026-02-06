@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Unplug, ChevronRight, ChevronLeft, ChevronDown } from 'lucide-react';
+import { Unplug, ChevronRight, ChevronLeft, ChevronDown, Loader2 } from 'lucide-react';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import { ToastProvider } from './components/Toast';
 import { TitleBar } from './components/TitleBar';
@@ -9,6 +9,7 @@ import KeyBrowser from './components/KeyBrowser';
 import StatusBar from './components/StatusBar';
 import SettingsButton from './components/SettingsButton';
 import ShortcutsModal from './components/ShortcutsModal';
+import { debounce } from './utils';
 import './styles/app.css';
 
 interface Connection {
@@ -30,8 +31,14 @@ interface Connection {
   sshPassphrase?: string;
 }
 
+// 历史记录最大条数（防止内存无限增长）
+const MAX_HISTORY_SIZE = 1000;
+
 // 布局配置存储 key
 const LAYOUT_STORAGE_KEY = 'app-layout';
+
+// 命令历史存储 key
+const COMMAND_HISTORY_KEY = 'command-history';
 
 // 加载布局配置
 function loadLayoutConfig() {
@@ -51,8 +58,8 @@ function loadLayoutConfig() {
   };
 }
 
-// 保存布局配置
-function saveLayoutConfig(config: {
+// 保存布局配置（内部实现）
+function _saveLayoutConfig(config: {
   sidebarWidth: number;
   sidebarVisible: boolean;
   consoleHeight: number;
@@ -65,9 +72,8 @@ function saveLayoutConfig(config: {
   }
 }
 
-// 命令历史存储 key
-const COMMAND_HISTORY_KEY = 'command-history';
-const MAX_HISTORY_SIZE = 100; // 最多保存 100 条历史
+// 防抖版本的布局保存（500ms 延迟）
+const saveLayoutConfig = debounce(_saveLayoutConfig, 500);
 
 // 加载命令历史
 function loadCommandHistory(): Array<{ command: string; result: any; duration: number; timestamp: Date }> {
@@ -87,8 +93,8 @@ function loadCommandHistory(): Array<{ command: string; result: any; duration: n
   return [];
 }
 
-// 保存命令历史
-function saveCommandHistory(history: Array<{ command: string; result: any; duration: number; timestamp: Date }>) {
+// 保存命令历史（内部实现）
+function _saveCommandHistory(history: Array<{ command: string; result: any; duration: number; timestamp: Date }>) {
   try {
     // 只保存最近的 MAX_HISTORY_SIZE 条
     const toSave = history.slice(-MAX_HISTORY_SIZE);
@@ -97,6 +103,9 @@ function saveCommandHistory(history: Array<{ command: string; result: any; durat
     console.error('Failed to save command history:', e);
   }
 }
+
+// 防抖版本的命令历史保存（1000ms 延迟）
+const saveCommandHistory = debounce(_saveCommandHistory, 1000);
 
 function AppContent() {
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -236,6 +245,13 @@ function AppContent() {
     };
     existingId?: string; // 已存在的连接 ID（用于编辑/重连）
   }) => {
+    // 如果是已存在的连接，先设置为 connecting 状态
+    if (config.existingId) {
+      setConnections(prev => prev.map(c =>
+        c.id === config.existingId ? { ...c, status: 'connecting' as const } : c
+      ));
+    }
+
     const result = await window.electronAPI?.redis.connect(config);
 
     if (result?.success) {
@@ -268,6 +284,13 @@ function AppContent() {
       }
       setActiveConnectionId(result.connectionId);
       return { success: true };
+    }
+
+    // 连接失败，重置状态为 disconnected
+    if (config.existingId) {
+      setConnections(prev => prev.map(c =>
+        c.id === config.existingId ? { ...c, status: 'disconnected' as const } : c
+      ));
     }
 
     return { success: false, error: result?.error || t('status.error') };
@@ -327,7 +350,14 @@ function AppContent() {
       timestamp: new Date(),
     };
 
-    setCommandHistory(prev => [...prev, historyEntry]);
+    setCommandHistory(prev => {
+      const newHistory = [...prev, historyEntry];
+      // 超过上限时移除最旧的记录（LRU 策略）
+      if (newHistory.length > MAX_HISTORY_SIZE) {
+        return newHistory.slice(-MAX_HISTORY_SIZE);
+      }
+      return newHistory;
+    });
     return result;
   }, [activeConnectionId]);
 
@@ -548,6 +578,14 @@ function AppContent() {
                 />
               </div>
             </>
+          ) : activeConnection?.status === 'connecting' ? (
+            <div className="connecting-overlay">
+              <div className="connecting-content">
+                <Loader2 className="connecting-spinner" size={48} />
+                <h2>{t('status.connecting')}</h2>
+                <p>{activeConnection.name}</p>
+              </div>
+            </div>
           ) : (
             <div className="no-connection">
               <div className="no-connection-icon"><Unplug size={48} /></div>

@@ -238,8 +238,6 @@ function ConnectionModal({ isOpen, onClose, onConnect, editConnection }: Connect
     }
   };
 
-  if (!isOpen) return null;
-
   const isEditMode = !!editConnection;
   const modalTitle = isEditMode ? t('connection.edit') : t('connection.add');
   const submitText = isEditMode ? t('common.save') : t('connection.connect');
@@ -250,7 +248,11 @@ function ConnectionModal({ isOpen, onClose, onConnect, editConnection }: Connect
       onClose={onClose}
       title={modalTitle}
       width={500}
+      height={550}
+      minWidth={400}
+      minHeight={400}
       className="connection-modal"
+      storageKey="connection"
     >
       <div className="modal-tabs">
         <button

@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Trash2, Star, ChevronUp } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import { debounce } from '../utils';
 import './CommandConsole.css';
 
 // Redis 命令列表
@@ -58,14 +59,17 @@ function loadFavorites(): string[] {
   return [];
 }
 
-// 保存收藏命令
-function saveFavorites(favorites: string[]) {
+// 保存收藏命令（内部实现）
+function _saveFavorites(favorites: string[]) {
   try {
     localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
   } catch (e) {
     console.error('Failed to save favorites:', e);
   }
 }
+
+// 防抖版本的收藏保存（300ms 延迟）
+const saveFavorites = debounce(_saveFavorites, 300);
 
 interface HistoryEntry {
   command: string;
@@ -445,4 +449,4 @@ function CommandConsole({ history, onExecute, onClear, disabled }: CommandConsol
   );
 }
 
-export default CommandConsole;
+export default React.memo(CommandConsole);

@@ -179,8 +179,6 @@ function NewKeyModal({ isOpen, onClose, onExecute, onSuccess }: NewKeyModalProps
     setZsetMembers(newMembers);
   };
 
-  if (!isOpen) return null;
-
   const typeOptions: { value: KeyType; label: string }[] = [
     { value: 'string', label: 'String' },
     { value: 'hash', label: 'Hash' },
@@ -195,7 +193,11 @@ function NewKeyModal({ isOpen, onClose, onExecute, onSuccess }: NewKeyModalProps
       onClose={onClose}
       title={settings.language === 'zh-CN' ? '新建 Key' : 'New Key'}
       width={500}
+      height={500}
+      minWidth={400}
+      minHeight={350}
       className="new-key-modal"
+      storageKey="new-key"
     >
       <form onSubmit={handleSubmit} className="modal-form">
         {error && <div className="form-error">{error}</div>}

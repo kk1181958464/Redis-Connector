@@ -1,3 +1,4 @@
+import React from 'react';
 import { ChevronUp } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import './StatusBar.css';
@@ -80,4 +81,4 @@ function StatusBar({ connection, consoleVisible, onToggleConsole }: StatusBarPro
   );
 }
 
-export default StatusBar;
+export default React.memo(StatusBar);

@@ -26,9 +26,11 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@types/react-window": "^1.8.8",
     "lucide-react": "^0.563.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-window": "^1.8.10",
     "ssh2": "^1.17.0"
   },
   "devDependencies": {

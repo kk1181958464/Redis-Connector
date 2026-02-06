@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Activity, Pause, Play } from 'lucide-react';
+import { Activity, Pause, Play } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
+import Modal from './Modal';
 import './PerformanceChart.css';
 
 interface PerformanceChartProps {
@@ -155,8 +156,6 @@ function PerformanceChart({ isOpen, onClose, onExecute }: PerformanceChartProps)
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const metricConfigs: Record<keyof Metrics, { label: string; unit: string; color: string }> = {
     ops: { label: settings.language === 'zh-CN' ? '操作数/秒' : 'Ops/sec', unit: '', color: '#3b82f6' },
     memory: { label: settings.language === 'zh-CN' ? '内存使用' : 'Memory', unit: 'MB', color: '#8b5cf6' },
@@ -198,39 +197,47 @@ function PerformanceChart({ isOpen, onClose, onExecute }: PerformanceChartProps)
     return `M 0,${height} L ${points.join(' L ')} L ${width},${height} Z`;
   };
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="performance-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>
-            <Activity size={20} />
-            {settings.language === 'zh-CN' ? '性能监控' : 'Performance Monitor'}
-          </h2>
-          <div className="header-actions">
-            <select
-              value={interval}
-              onChange={e => setIntervalValue(Number(e.target.value))}
-              className="interval-select"
-            >
-              <option value={500}>500ms</option>
-              <option value={1000}>1s</option>
-              <option value={2000}>2s</option>
-              <option value={5000}>5s</option>
-            </select>
-            <button
-              className={`control-btn ${isPaused ? 'paused' : ''}`}
-              onClick={() => setIsPaused(!isPaused)}
-              title={isPaused ? 'Resume' : 'Pause'}
-            >
-              {isPaused ? <Play size={16} /> : <Pause size={16} />}
-            </button>
-            <button className="close-btn" onClick={onClose}>
-              <X size={20} />
-            </button>
-          </div>
-        </div>
+  const titleContent = (
+    <>
+      <Activity size={18} />
+      {settings.language === 'zh-CN' ? '性能监控' : 'Performance Monitor'}
+      <div className="header-actions">
+        <select
+          value={interval}
+          onChange={e => setIntervalValue(Number(e.target.value))}
+          className="interval-select"
+          onMouseDown={e => e.stopPropagation()}
+        >
+          <option value={500}>500ms</option>
+          <option value={1000}>1s</option>
+          <option value={2000}>2s</option>
+          <option value={5000}>5s</option>
+        </select>
+        <button
+          className={`control-btn ${isPaused ? 'paused' : ''}`}
+          onClick={() => setIsPaused(!isPaused)}
+          onMouseDown={e => e.stopPropagation()}
+          title={isPaused ? 'Resume' : 'Pause'}
+        >
+          {isPaused ? <Play size={16} /> : <Pause size={16} />}
+        </button>
+      </div>
+    </>
+  );
 
-        <div className="modal-body">
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={titleContent}
+      width={800}
+      height={600}
+      minWidth={500}
+      minHeight={400}
+      className="performance-modal"
+      storageKey="performance-chart"
+    >
+      <div className="performance-content">
           {/* 指标选择器 */}
           <div className="metric-tabs">
             {(Object.keys(metricConfigs) as (keyof Metrics)[]).map(key => (
@@ -336,8 +343,7 @@ function PerformanceChart({ isOpen, onClose, onExecute }: PerformanceChartProps)
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

@@ -398,8 +398,6 @@ function ExportImportModal({ isOpen, mode, onClose, onExecute, keys, onSuccess }
     reader.readAsText(file);
   }, []);
 
-  if (!isOpen) return null;
-
   const isExport = mode === 'export';
 
   return (
@@ -410,7 +408,11 @@ function ExportImportModal({ isOpen, mode, onClose, onExecute, keys, onSuccess }
         ? (settings.language === 'zh-CN' ? '导出 Keys' : 'Export Keys')
         : (settings.language === 'zh-CN' ? '导入 Keys' : 'Import Keys')}
       width={500}
+      height={450}
+      minWidth={400}
+      minHeight={350}
       className="export-import-modal"
+      storageKey="export-import"
     >
       <div className="modal-body">
         {error && <div className="form-error">{error}</div>}

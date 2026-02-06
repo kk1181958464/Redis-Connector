@@ -1,50 +1,16 @@
 /* PerformanceChart 样式 */
-.performance-modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  width: 800px;
-  max-width: 95vw;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-  animation: modalIn 0.2s ease;
-}
 
-@keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.performance-modal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.performance-modal .modal-header h2 {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* 标题栏内的控制按钮 */
+.performance-modal .modal-title-base {
+  flex: 1;
+  justify-content: flex-start;
 }
 
 .performance-modal .header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-left: auto;
 }
 
 .interval-select {
@@ -88,24 +54,8 @@
   color: white;
 }
 
-.performance-modal .close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-normal);
-}
-
-.performance-modal .close-btn:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.performance-modal .modal-body {
-  flex: 1;
-  overflow-y: auto;
+/* 内容区域 */
+.performance-content {
   padding: 24px;
 }
 

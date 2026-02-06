@@ -16,6 +16,11 @@ const electronAPI = {
     getStatus: (connectionId: string) => ipcRenderer.invoke('redis:getStatus', connectionId),
     listConnections: () => ipcRenderer.invoke('redis:listConnections'),
     test: (config: any) => ipcRenderer.invoke('redis:test', config),
+    // Pub/Sub 订阅功能
+    subscribe: (connectionId: string, channels: string[]) => ipcRenderer.invoke('redis:subscribe', connectionId, channels),
+    unsubscribe: (connectionId: string, channels: string[]) => ipcRenderer.invoke('redis:unsubscribe', connectionId, channels),
+    unsubscribeAll: (connectionId: string) => ipcRenderer.invoke('redis:unsubscribe-all', connectionId),
+    getSubscriptions: (connectionId: string) => ipcRenderer.invoke('redis:get-subscriptions', connectionId),
   },
 
   // 连接配置存储
@@ -42,7 +47,7 @@ const electronAPI = {
 
   // 事件监听
   on: (channel: string, callback: (...args: any[]) => void) => {
-    const validChannels = ['redis:status', 'redis:error', 'redis:message'];
+    const validChannels = ['redis:status', 'redis:error', 'redis:message', 'redis:pubsub-message'];
     if (validChannels.includes(channel)) {
       const subscription = (_event: any, ...args: any[]) => callback(...args);
       ipcRenderer.on(channel, subscription);

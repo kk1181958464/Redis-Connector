@@ -40,6 +40,8 @@ export class SSHTunnel extends EventEmitter {
   private config: TunnelConfig;
   private tunnelInfo: TunnelInfo | null = null;
   private isConnected: boolean = false;
+  private serverReady: boolean = false;
+  private serverPort: number = 0;
 
   constructor(config: TunnelConfig) {
     super();
@@ -47,59 +49,30 @@ export class SSHTunnel extends EventEmitter {
   }
 
   /**
-   * 建立 SSH 隧道
+   * 建立 SSH 隧道（优化版：并行初始化）
    */
   async connect(): Promise<TunnelInfo> {
-    return new Promise((resolve, reject) => {
-      this.sshClient = new Client();
+    // 并行执行：SSH 连接 + 本地服务器创建
+    const [serverPort] = await Promise.all([
+      this.prepareLocalServer(),
+      this.connectSSH(),
+    ]);
 
-      // SSH 连接配置
-      const sshConfig: ConnectConfig = {
-        host: this.config.ssh.host,
-        port: this.config.ssh.port,
-        username: this.config.ssh.username,
-        readyTimeout: 10000,
-      };
+    this.tunnelInfo = {
+      localHost: '127.0.0.1',
+      localPort: serverPort,
+      remoteHost: this.config.remoteHost,
+      remotePort: this.config.remotePort,
+    };
 
-      // 认证方式
-      if (this.config.ssh.authType === 'password') {
-        sshConfig.password = this.config.ssh.password;
-      } else {
-        sshConfig.privateKey = this.config.ssh.privateKey;
-        if (this.config.ssh.passphrase) {
-          sshConfig.passphrase = this.config.ssh.passphrase;
-        }
-      }
-
-      // SSH 连接就绪
-      this.sshClient.on('ready', () => {
-        this.isConnected = true;
-        this.createLocalServer()
-          .then(resolve)
-          .catch(reject);
-      });
-
-      // SSH 错误
-      this.sshClient.on('error', (err) => {
-        this.emit('error', err);
-        reject(err);
-      });
-
-      // SSH 连接关闭
-      this.sshClient.on('close', () => {
-        this.isConnected = false;
-        this.emit('close');
-      });
-
-      // 发起 SSH 连接
-      this.sshClient.connect(sshConfig);
-    });
+    this.emit('ready', this.tunnelInfo);
+    return this.tunnelInfo;
   }
 
   /**
-   * 创建本地 TCP 服务器，转发到远程
+   * 预创建本地 TCP 服务器（不等待 SSH）
    */
-  private createLocalServer(): Promise<TunnelInfo> {
+  private prepareLocalServer(): Promise<number> {
     return new Promise((resolve, reject) => {
       this.server = net.createServer((localSocket) => {
         if (!this.sshClient || !this.isConnected) {
@@ -136,19 +109,99 @@ export class SSHTunnel extends EventEmitter {
         reject(err);
       });
 
-      // 监听本地端口
-      const localPort = this.config.localPort || 0; // 0 表示自动分配
+      // 监听本地端口（0 表示自动分配）
+      const localPort = this.config.localPort || 0;
       this.server.listen(localPort, '127.0.0.1', () => {
         const address = this.server!.address() as net.AddressInfo;
-        this.tunnelInfo = {
-          localHost: '127.0.0.1',
-          localPort: address.port,
-          remoteHost: this.config.remoteHost,
-          remotePort: this.config.remotePort,
-        };
-        this.emit('ready', this.tunnelInfo);
-        resolve(this.tunnelInfo);
+        this.serverPort = address.port;
+        this.serverReady = true;
+        resolve(address.port);
       });
+    });
+  }
+
+  /**
+   * 建立 SSH 连接（优化算法配置）
+   */
+  private connectSSH(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.sshClient = new Client();
+
+      // SSH 连接配置（性能优化）
+      const sshConfig: ConnectConfig = {
+        host: this.config.ssh.host,
+        port: this.config.ssh.port,
+        username: this.config.ssh.username,
+        readyTimeout: 10000,
+        // 性能优化：指定高效算法，减少协商时间
+        algorithms: {
+          kex: [
+            'curve25519-sha256',
+            'curve25519-sha256@libssh.org',
+            'ecdh-sha2-nistp256',
+            'ecdh-sha2-nistp384',
+            'ecdh-sha2-nistp521',
+            'diffie-hellman-group14-sha256',
+            'diffie-hellman-group14-sha1',
+          ],
+          cipher: [
+            'aes128-gcm@openssh.com',
+            'aes256-gcm@openssh.com',
+            'aes128-ctr',
+            'aes192-ctr',
+            'aes256-ctr',
+          ],
+          serverHostKey: [
+            'ssh-ed25519',
+            'ecdsa-sha2-nistp256',
+            'ecdsa-sha2-nistp384',
+            'ecdsa-sha2-nistp521',
+            'rsa-sha2-512',
+            'rsa-sha2-256',
+            'ssh-rsa',
+          ],
+          hmac: [
+            'hmac-sha2-256-etm@openssh.com',
+            'hmac-sha2-512-etm@openssh.com',
+            'hmac-sha2-256',
+            'hmac-sha2-512',
+            'hmac-sha1',
+          ],
+          // 禁用压缩，减少协商开销
+          compress: ['none'],
+        },
+      };
+
+      // 认证方式
+      if (this.config.ssh.authType === 'password') {
+        sshConfig.password = this.config.ssh.password;
+      } else {
+        sshConfig.privateKey = this.config.ssh.privateKey;
+        if (this.config.ssh.passphrase) {
+          sshConfig.passphrase = this.config.ssh.passphrase;
+        }
+      }
+
+      // SSH 连接就绪
+      this.sshClient.on('ready', () => {
+        this.isConnected = true;
+        resolve();
+      });
+
+      // SSH 错误
+      this.sshClient.on('error', (err) => {
+        this.emit('error', err);
+        reject(err);
+      });
+
+      // SSH 连接关闭
+      this.sshClient.on('close', () => {
+        this.isConnected = false;
+        this.emit('close');
+      });
+
+      // 发起 SSH 连接
+      this.sshClient.connect(sshConfig);
     });
   }
 

@@ -44,6 +44,9 @@ function decrypt(encryptedText: string): string {
 interface ConnectionInfo {
   client: RedisClient;
   tunnel?: SSHTunnel;
+  // Pub/Sub 订阅连接（独立于主连接）
+  subscribeClient?: RedisClient;
+  subscribedChannels?: Set<string>;
 }
 
 // 连接池：管理多个 Redis 连接
@@ -81,35 +84,83 @@ interface ExtendedConnectionConfig extends RedisConnectionConfig {
   };
 }
 
+// 构建 Redis 连接配置（从扩展配置中提取）
+function buildRedisConfig(config: ExtendedConnectionConfig, overrides?: Partial<RedisConnectionConfig>): RedisConnectionConfig {
+  return {
+    host: config.host,
+    port: config.port,
+    password: config.password,
+    db: config.db,
+    name: config.name,
+    ...overrides,
+    tls: config.tls?.enabled ? {
+      enabled: true,
+      rejectUnauthorized: config.tls.rejectUnauthorized,
+      ca: config.tls.ca,
+      cert: config.tls.cert,
+      key: config.tls.key,
+    } : undefined,
+  };
+}
+
+// 创建 SSH 隧道并返回本地连接信息
+async function createSSHTunnel(config: ExtendedConnectionConfig): Promise<{ tunnel: SSHTunnel; localHost: string; localPort: number }> {
+  const tunnel = new SSHTunnel({
+    ssh: config.ssh!,
+    remoteHost: config.host || '127.0.0.1',
+    remotePort: config.port || 6379,
+  });
+  const tunnelInfo = await tunnel.connect();
+  return {
+    tunnel,
+    localHost: tunnelInfo.localHost,
+    localPort: tunnelInfo.localPort,
+  };
+}
+
+// 加密配置中的敏感字段
+function encryptConfigSecrets(config: ExtendedConnectionConfig): ExtendedConnectionConfig & { _encrypted: boolean } {
+  return {
+    ...config,
+    password: config.password ? encrypt(config.password) : undefined,
+    ssh: config.ssh ? {
+      ...config.ssh,
+      password: config.ssh.password ? encrypt(config.ssh.password) : undefined,
+      privateKey: config.ssh.privateKey ? encrypt(config.ssh.privateKey) : undefined,
+      passphrase: config.ssh.passphrase ? encrypt(config.ssh.passphrase) : undefined,
+    } : undefined,
+    _encrypted: true,
+  };
+}
+
+// 解密配置中的敏感字段
+function decryptConfigSecrets(config: any): ExtendedConnectionConfig {
+  if (!config._encrypted) return config;
+  const { _encrypted, ...rest } = config;
+  return {
+    ...rest,
+    password: rest.password ? decrypt(rest.password) : undefined,
+    ssh: rest.ssh ? {
+      ...rest.ssh,
+      password: rest.ssh.password ? decrypt(rest.ssh.password) : undefined,
+      privateKey: rest.ssh.privateKey ? decrypt(rest.ssh.privateKey) : undefined,
+      passphrase: rest.ssh.passphrase ? decrypt(rest.ssh.passphrase) : undefined,
+    } : undefined,
+  };
+}
+
 export function setupRedisHandlers(): void {
   // 连接到 Redis
   ipcMain.handle('redis:connect', async (_event, config: ExtendedConnectionConfig) => {
     const connectionId = generateConnectionId();
     let tunnel: SSHTunnel | undefined;
-    let redisConfig: RedisConnectionConfig = {
-      host: config.host,
-      port: config.port,
-      password: config.password,
-      db: config.db,
-      name: config.name,
-      // TLS 配置
-      tls: config.tls?.enabled ? {
-        enabled: true,
-        rejectUnauthorized: config.tls.rejectUnauthorized,
-        ca: config.tls.ca,
-        cert: config.tls.cert,
-        key: config.tls.key,
-      } : undefined,
-    };
+    let redisConfig = buildRedisConfig(config);
 
     try {
       // 如果使用 SSH 隧道
       if (config.useSSH && config.ssh) {
-        tunnel = new SSHTunnel({
-          ssh: config.ssh,
-          remoteHost: config.host || '127.0.0.1',
-          remotePort: config.port || 6379,
-        });
+        const tunnelResult = await createSSHTunnel(config);
+        tunnel = tunnelResult.tunnel;
 
         // 监听隧道事件
         tunnel.on('error', (err) => {
@@ -120,12 +171,9 @@ export function setupRedisHandlers(): void {
           broadcast('redis:status', connectionId, 'disconnected');
         });
 
-        // 建立 SSH 隧道
-        const tunnelInfo = await tunnel.connect();
-
         // 通过本地隧道端口连接 Redis
-        redisConfig.host = tunnelInfo.localHost;
-        redisConfig.port = tunnelInfo.localPort;
+        redisConfig.host = tunnelResult.localHost;
+        redisConfig.port = tunnelResult.localPort;
       }
 
       // 创建 Redis 客户端
@@ -171,38 +219,17 @@ export function setupRedisHandlers(): void {
   ipcMain.handle('redis:test', async (_event, config: ExtendedConnectionConfig) => {
     let tunnel: SSHTunnel | undefined;
     let client: RedisClient | undefined;
-    let redisConfig: RedisConnectionConfig = {
-      host: config.host,
-      port: config.port,
-      password: config.password,
-      db: config.db,
-      name: config.name,
-      connectTimeout: 5000, // 测试连接使用较短超时
-      // TLS 配置
-      tls: config.tls?.enabled ? {
-        enabled: true,
-        rejectUnauthorized: config.tls.rejectUnauthorized,
-        ca: config.tls.ca,
-        cert: config.tls.cert,
-        key: config.tls.key,
-      } : undefined,
-    };
+    let redisConfig = buildRedisConfig(config, { connectTimeout: 5000 });
 
     try {
       // 如果使用 SSH 隧道
       if (config.useSSH && config.ssh) {
-        tunnel = new SSHTunnel({
-          ssh: config.ssh,
-          remoteHost: config.host || '127.0.0.1',
-          remotePort: config.port || 6379,
-        });
-
-        // 建立 SSH 隧道
-        const tunnelInfo = await tunnel.connect();
+        const tunnelResult = await createSSHTunnel(config);
+        tunnel = tunnelResult.tunnel;
 
         // 通过本地隧道端口连接 Redis
-        redisConfig.host = tunnelInfo.localHost;
-        redisConfig.port = tunnelInfo.localPort;
+        redisConfig.host = tunnelResult.localHost;
+        redisConfig.port = tunnelResult.localPort;
       }
 
       // 创建 Redis 客户端
@@ -315,18 +342,7 @@ export function setupRedisHandlers(): void {
   ipcMain.handle('config:save', async (_event, configs: ExtendedConnectionConfig[]) => {
     try {
       const configPath = getConfigPath();
-      // 加密敏感信息后保存
-      const encryptedConfigs = configs.map((config) => ({
-        ...config,
-        password: config.password ? encrypt(config.password) : undefined,
-        ssh: config.ssh ? {
-          ...config.ssh,
-          password: config.ssh.password ? encrypt(config.ssh.password) : undefined,
-          privateKey: config.ssh.privateKey ? encrypt(config.ssh.privateKey) : undefined,
-          passphrase: config.ssh.passphrase ? encrypt(config.ssh.passphrase) : undefined,
-        } : undefined,
-        _encrypted: true, // 标记已加密
-      }));
+      const encryptedConfigs = configs.map(encryptConfigSecrets);
       await fs.promises.writeFile(configPath, JSON.stringify(encryptedConfigs, null, 2));
       return { success: true };
     } catch (error) {
@@ -341,21 +357,7 @@ export function setupRedisHandlers(): void {
       if (fs.existsSync(configPath)) {
         const data = await fs.promises.readFile(configPath, 'utf-8');
         const configs = JSON.parse(data);
-        // 解密敏感信息
-        const decryptedConfigs = configs.map((config: any) => {
-          if (!config._encrypted) return config; // 旧格式，未加密
-          const { _encrypted, ...rest } = config;
-          return {
-            ...rest,
-            password: rest.password ? decrypt(rest.password) : undefined,
-            ssh: rest.ssh ? {
-              ...rest.ssh,
-              password: rest.ssh.password ? decrypt(rest.ssh.password) : undefined,
-              privateKey: rest.ssh.privateKey ? decrypt(rest.ssh.privateKey) : undefined,
-              passphrase: rest.ssh.passphrase ? decrypt(rest.ssh.passphrase) : undefined,
-            } : undefined,
-          };
-        });
+        const decryptedConfigs = configs.map(decryptConfigSecrets);
         return { success: true, configs: decryptedConfigs };
       }
       return { success: true, configs: [] };
@@ -374,20 +376,7 @@ export function setupRedisHandlers(): void {
         const data = await fs.promises.readFile(configPath, 'utf-8');
         const configs = JSON.parse(data);
         // 解密敏感信息后导出（明文，便于跨设备导入）
-        connections = configs.map((config: any) => {
-          if (!config._encrypted) return config;
-          const { _encrypted, ...rest } = config;
-          return {
-            ...rest,
-            password: rest.password ? decrypt(rest.password) : undefined,
-            ssh: rest.ssh ? {
-              ...rest.ssh,
-              password: rest.ssh.password ? decrypt(rest.ssh.password) : undefined,
-              privateKey: rest.ssh.privateKey ? decrypt(rest.ssh.privateKey) : undefined,
-              passphrase: rest.ssh.passphrase ? decrypt(rest.ssh.passphrase) : undefined,
-            } : undefined,
-          };
-        });
+        connections = configs.map(decryptConfigSecrets);
       }
 
       return {
@@ -411,24 +400,120 @@ export function setupRedisHandlers(): void {
       }
 
       const configPath = getConfigPath();
-      // 加密敏感信息后保存
-      const encryptedConfigs = importData.connections.map((config) => ({
-        ...config,
-        password: config.password ? encrypt(config.password) : undefined,
-        ssh: config.ssh ? {
-          ...config.ssh,
-          password: config.ssh.password ? encrypt(config.ssh.password) : undefined,
-          privateKey: config.ssh.privateKey ? encrypt(config.ssh.privateKey) : undefined,
-          passphrase: config.ssh.passphrase ? encrypt(config.ssh.passphrase) : undefined,
-        } : undefined,
-        _encrypted: true,
-      }));
+      const encryptedConfigs = importData.connections.map(encryptConfigSecrets);
 
       await fs.promises.writeFile(configPath, JSON.stringify(encryptedConfigs, null, 2));
       return { success: true, count: encryptedConfigs.length };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
+  });
+
+  // ==================== Pub/Sub 订阅功能 ====================
+
+  // 订阅频道
+  ipcMain.handle('redis:subscribe', async (_event, connectionId: string, channels: string[]) => {
+    const connInfo = connections.get(connectionId);
+    if (!connInfo) {
+      return { success: false, error: 'Connection not found' };
+    }
+
+    try {
+      // 如果没有订阅连接，创建一个新的
+      if (!connInfo.subscribeClient) {
+        const config = connInfo.client.getConfig();
+        connInfo.subscribeClient = new RedisClient(config);
+        connInfo.subscribedChannels = new Set();
+
+        // 连接订阅客户端
+        await connInfo.subscribeClient.connect();
+
+        // 监听消息事件
+        connInfo.subscribeClient.on('message', (response: any) => {
+          // RESP 协议中，订阅消息格式为 ['message', channel, message]
+          if (Array.isArray(response?.value) && response.value.length >= 3) {
+            const [type, channel, message] = response.value;
+            const typeStr = type?.value || type;
+            const channelStr = channel?.value || channel;
+            const messageStr = message?.value || message;
+
+            if (typeStr === 'message') {
+              broadcast('redis:pubsub-message', connectionId, {
+                channel: channelStr,
+                message: messageStr,
+                timestamp: Date.now(),
+              });
+            }
+          }
+        });
+      }
+
+      // 订阅频道
+      for (const channel of channels) {
+        if (!connInfo.subscribedChannels!.has(channel)) {
+          await connInfo.subscribeClient.sendCommand(['SUBSCRIBE', channel]);
+          connInfo.subscribedChannels!.add(channel);
+        }
+      }
+
+      return { success: true, channels: Array.from(connInfo.subscribedChannels!) };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // 取消订阅频道
+  ipcMain.handle('redis:unsubscribe', async (_event, connectionId: string, channels: string[]) => {
+    const connInfo = connections.get(connectionId);
+    if (!connInfo || !connInfo.subscribeClient) {
+      return { success: false, error: 'No subscription connection' };
+    }
+
+    try {
+      for (const channel of channels) {
+        if (connInfo.subscribedChannels!.has(channel)) {
+          await connInfo.subscribeClient.sendCommand(['UNSUBSCRIBE', channel]);
+          connInfo.subscribedChannels!.delete(channel);
+        }
+      }
+
+      // 如果没有订阅的频道了，关闭订阅连接
+      if (connInfo.subscribedChannels!.size === 0) {
+        await connInfo.subscribeClient.disconnect();
+        connInfo.subscribeClient = undefined;
+        connInfo.subscribedChannels = undefined;
+      }
+
+      return { success: true, channels: connInfo.subscribedChannels ? Array.from(connInfo.subscribedChannels) : [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // 取消所有订阅
+  ipcMain.handle('redis:unsubscribe-all', async (_event, connectionId: string) => {
+    const connInfo = connections.get(connectionId);
+    if (!connInfo || !connInfo.subscribeClient) {
+      return { success: true };
+    }
+
+    try {
+      await connInfo.subscribeClient.disconnect();
+      connInfo.subscribeClient = undefined;
+      connInfo.subscribedChannels = undefined;
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  // 获取已订阅的频道列表
+  ipcMain.handle('redis:get-subscriptions', (_event, connectionId: string) => {
+    const connInfo = connections.get(connectionId);
+    if (!connInfo || !connInfo.subscribedChannels) {
+      return { success: true, channels: [] };
+    }
+    return { success: true, channels: Array.from(connInfo.subscribedChannels) };
   });
 }
 

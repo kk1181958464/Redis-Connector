@@ -1220,76 +1220,24 @@
   border-color: var(--accent);
 }
 
-/* ========== 复制 Key 弹窗 ========== */
-.copy-key-modal {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  width: 420px;
-  max-width: 90vw;
-  box-shadow: var(--shadow-lg);
-  animation: modalSlideIn 0.25s ease;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.copy-key-modal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-tertiary);
-}
-
-.copy-key-modal .modal-header h2 {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.copy-key-modal .close-btn {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 20px;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.copy-key-modal .close-btn:hover {
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-}
-
-.copy-key-modal .modal-body {
+/* ========== 复制 Key / 批量 TTL 弹窗 ========== */
+.copy-key-modal .modal-body-inner,
+.batch-ttl-modal .modal-body-inner {
   padding: 20px;
 }
 
-.copy-key-modal .form-group {
+.copy-key-modal .form-group,
+.batch-ttl-modal .form-group {
   margin-bottom: 16px;
 }
 
-.copy-key-modal .form-group:last-child {
+.copy-key-modal .form-group:last-child,
+.batch-ttl-modal .form-group:last-child {
   margin-bottom: 0;
 }
 
-.copy-key-modal .form-group label {
+.copy-key-modal .form-group label,
+.batch-ttl-modal .form-group label {
   display: block;
   font-size: 13px;
   font-weight: 500;
@@ -1297,7 +1245,8 @@
   margin-bottom: 6px;
 }
 
-.copy-key-modal .form-group input {
+.copy-key-modal .form-group input,
+.batch-ttl-modal .form-group input {
   width: 100%;
   padding: 10px 12px;
   font-size: 13px;
@@ -1308,24 +1257,28 @@
   color: var(--text-primary);
 }
 
-.copy-key-modal .form-group input:focus {
+.copy-key-modal .form-group input:focus,
+.batch-ttl-modal .form-group input:focus {
   border-color: var(--accent);
   outline: none;
   box-shadow: 0 0 0 3px var(--accent-muted);
 }
 
-.copy-key-modal .form-group input:disabled {
+.copy-key-modal .form-group input:disabled,
+.batch-ttl-modal .form-group input:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.copy-key-modal .form-hint {
+.copy-key-modal .form-hint,
+.batch-ttl-modal .form-hint {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 6px;
 }
 
-.copy-key-modal .modal-footer {
+.copy-key-modal .modal-footer,
+.batch-ttl-modal .modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -1334,7 +1287,8 @@
   background: var(--bg-tertiary);
 }
 
-.copy-key-modal .modal-footer button {
+.copy-key-modal .modal-footer button,
+.batch-ttl-modal .modal-footer button {
   padding: 8px 20px;
   font-size: 13px;
   font-weight: 500;
@@ -1343,27 +1297,32 @@
   transition: all var(--transition-normal);
 }
 
-.copy-key-modal .modal-footer button.secondary {
+.copy-key-modal .modal-footer button.secondary,
+.batch-ttl-modal .modal-footer button.secondary {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   color: var(--text-primary);
 }
 
-.copy-key-modal .modal-footer button.secondary:hover {
+.copy-key-modal .modal-footer button.secondary:hover,
+.batch-ttl-modal .modal-footer button.secondary:hover {
   background: var(--bg-elevated);
 }
 
-.copy-key-modal .modal-footer button.primary {
+.copy-key-modal .modal-footer button.primary,
+.batch-ttl-modal .modal-footer button.primary {
   background: var(--accent);
   border: 1px solid var(--accent);
   color: white;
 }
 
-.copy-key-modal .modal-footer button.primary:hover:not(:disabled) {
+.copy-key-modal .modal-footer button.primary:hover:not(:disabled),
+.batch-ttl-modal .modal-footer button.primary:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
-.copy-key-modal .modal-footer button.primary:disabled {
+.copy-key-modal .modal-footer button.primary:disabled,
+.batch-ttl-modal .modal-footer button.primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

@@ -33,6 +33,7 @@ interface PendingCommand {
   resolve: (value: RespValue) => void;
   reject: (error: Error) => void;
   timer?: NodeJS.Timeout;
+  cancelled?: boolean; // 标记命令是否已超时取消
 }
 
 export class RedisClient extends EventEmitter {
@@ -41,6 +42,7 @@ export class RedisClient extends EventEmitter {
   private parser: RespParser;
   private status: ConnectionStatus = 'disconnected';
   private pendingCommands: PendingCommand[] = [];
+  private pendingCommandsHead: number = 0; // 队列头指针，避免 shift() O(n) 操作
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 3;
   private heartbeatTimer: NodeJS.Timeout | null = null;
@@ -187,6 +189,9 @@ export class RedisClient extends EventEmitter {
   private setupSocketListeners(): void {
     if (!this.socket) return;
 
+    // 禁用 Nagle 算法，减少小数据包延迟（Redis 命令通常很小）
+    this.socket.setNoDelay(true);
+
     // 启用 TCP KeepAlive，检测死连接
     this.socket.setKeepAlive(true, 10000);
 
@@ -221,15 +226,31 @@ export class RedisClient extends EventEmitter {
   }
 
   /**
-   * 处理响应队列
+   * 处理响应队列（使用索引指针，O(1) 出队）
    */
   private processResponses(): void {
     let response: RespValue | null;
-    
+
     while ((response = this.parser.tryParse()) !== null) {
-      const pending = this.pendingCommands.shift();
-      
+      // 跳过已取消的命令（超时）
+      while (this.pendingCommands[this.pendingCommandsHead]?.cancelled) {
+        this.pendingCommands[this.pendingCommandsHead] = undefined as any;
+        this.pendingCommandsHead++;
+      }
+
+      const pending = this.pendingCommands[this.pendingCommandsHead];
+
       if (pending) {
+        // 移动头指针（O(1) 操作，替代 shift() 的 O(n)）
+        this.pendingCommands[this.pendingCommandsHead] = undefined as any;
+        this.pendingCommandsHead++;
+
+        // 定期压缩数组，避免内存无限增长（当已处理超过 1000 个命令时）
+        if (this.pendingCommandsHead > 1000) {
+          this.pendingCommands = this.pendingCommands.slice(this.pendingCommandsHead);
+          this.pendingCommandsHead = 0;
+        }
+
         if (pending.timer) {
           clearTimeout(pending.timer);
         }
@@ -252,13 +273,10 @@ export class RedisClient extends EventEmitter {
     return new Promise((resolve, reject) => {
       const pending: PendingCommand = { resolve, reject };
 
-      // 命令超时
+      // 命令超时（使用 cancelled 标志，避免 splice 破坏队列顺序）
       if (this.config.commandTimeout) {
         pending.timer = setTimeout(() => {
-          const index = this.pendingCommands.indexOf(pending);
-          if (index !== -1) {
-            this.pendingCommands.splice(index, 1);
-          }
+          pending.cancelled = true;
           reject(new Error(`Command timeout after ${this.config.commandTimeout}ms`));
         }, this.config.commandTimeout);
       }
@@ -393,12 +411,10 @@ export class RedisClient extends EventEmitter {
       return new Promise((resolve, reject) => {
         const pending: PendingCommand = { resolve, reject };
 
+        // 命令超时（使用 cancelled 标志，避免 splice 破坏队列顺序）
         if (this.config.commandTimeout) {
           pending.timer = setTimeout(() => {
-            const index = this.pendingCommands.indexOf(pending);
-            if (index !== -1) {
-              this.pendingCommands.splice(index, 1);
-            }
+            pending.cancelled = true;
             reject(new Error(`Command timeout after ${this.config.commandTimeout}ms`));
           }, this.config.commandTimeout);
         }
@@ -513,13 +529,19 @@ export class RedisClient extends EventEmitter {
    * 拒绝所有待处理的命令
    */
   private rejectAllPending(error: Error): void {
-    while (this.pendingCommands.length > 0) {
-      const pending = this.pendingCommands.shift()!;
-      if (pending.timer) {
-        clearTimeout(pending.timer);
+    // 从头指针开始遍历，拒绝所有待处理命令
+    for (let i = this.pendingCommandsHead; i < this.pendingCommands.length; i++) {
+      const pending = this.pendingCommands[i];
+      if (pending) {
+        if (pending.timer) {
+          clearTimeout(pending.timer);
+        }
+        pending.reject(error);
       }
-      pending.reject(error);
     }
+    // 重置队列
+    this.pendingCommands = [];
+    this.pendingCommandsHead = 0;
   }
 }
 

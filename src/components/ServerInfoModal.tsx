@@ -273,8 +273,8 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
       return;
     }
 
+    // 新扫描时重置状态
     if (isNewScan) {
-      // 新扫描：重置所有状态
       setBigKeys([]);
       setBigKeyScanProgress(0);
       setBigKeyPage(1);
@@ -290,9 +290,10 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
     const pageSize = settings.data.keysPerPage;
 
     try {
+      // 新扫描时使用空数组和初始值，而不是依赖可能过时的状态
       const newKeys: BigKeyInfo[] = isNewScan ? [] : [...bigKeys];
-      let cursor = bigKeyCursorRef.current;
-      let scanned = bigKeyTotalScanned;
+      let cursor = isNewScan ? '0' : bigKeyCursorRef.current;
+      let scanned = isNewScan ? 0 : bigKeyTotalScanned;
       let foundInThisBatch = 0;
       const targetCount = isNewScan ? pageSize : newKeys.length + pageSize;
 
@@ -471,10 +472,18 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
   // 加载更多大 Key
   const loadMoreBigKeys = useCallback(() => {
     if (!bigKeyScanning && bigKeyHasMore) {
-      setBigKeyPage(prev => prev + 1);
+      // 只加载更多数据，不改变当前页码
       scanBigKeys(false);
     }
   }, [bigKeyScanning, bigKeyHasMore, scanBigKeys]);
+
+  // 确保当前页码不超过总页数
+  useEffect(() => {
+    const totalPages = Math.ceil(bigKeys.length / settings.data.keysPerPage) || 1;
+    if (bigKeyPage > totalPages) {
+      setBigKeyPage(totalPages);
+    }
+  }, [bigKeys.length, bigKeyPage, settings.data.keysPerPage]);
 
   useEffect(() => {
     if (isOpen) {
@@ -524,8 +533,6 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
     return `${(microseconds / 1000000).toFixed(2)} s`;
   };
 
-  if (!isOpen) return null;
-
   const sections = [
     { key: 'server', label: settings.language === 'zh-CN' ? '服务器' : 'Server', icon: <Server size={16} /> },
     { key: 'clients', label: settings.language === 'zh-CN' ? '客户端' : 'Clients', icon: <Users size={16} /> },
@@ -563,7 +570,11 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
       onClose={onClose}
       title={<>{settings.language === 'zh-CN' ? '服务器信息' : 'Server Info'}{headerActions}</>}
       width={900}
+      height={700}
+      minWidth={600}
+      minHeight={400}
       className="server-info-modal"
+      storageKey="server-info"
     >
       <div className="modal-body">
         {/* 快速概览 */}
@@ -635,6 +646,9 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
                     className="scan-btn"
                     onClick={() => loadSlowLogs(true)}
                     disabled={slowLogLoading}
+                    title={settings.language === 'zh-CN'
+                      ? `每次扫描 ${settings.data.keysPerPage} 条数据`
+                      : `Scan ${settings.data.keysPerPage} items per batch`}
                   >
                     <RefreshCw size={14} className={slowLogLoading ? 'spin' : ''} />
                     {settings.language === 'zh-CN' ? '开始扫描' : 'Start Scan'}
@@ -775,9 +789,14 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
                       <button
                         className="scan-btn"
                         onClick={() => scanBigKeys(true)}
+                        title={settings.language === 'zh-CN'
+                          ? `每次扫描 ${settings.data.keysPerPage} 条数据`
+                          : `Scan ${settings.data.keysPerPage} items per batch`}
                       >
                         <RefreshCw size={14} />
-                        {settings.language === 'zh-CN' ? '开始扫描' : 'Start Scan'}
+                        {bigKeys.length > 0
+                          ? (settings.language === 'zh-CN' ? '重新扫描' : 'Rescan')
+                          : (settings.language === 'zh-CN' ? '开始扫描' : 'Start Scan')}
                       </button>
                     )}
                   </div>
@@ -895,6 +914,9 @@ function ServerInfoModal({ isOpen, onClose, onExecute, onPipeline }: ServerInfoM
                           className="load-more-btn"
                           onClick={loadMoreBigKeys}
                           disabled={bigKeyScanning}
+                          title={settings.language === 'zh-CN'
+                            ? `每次加载 ${settings.data.keysPerPage} 条数据`
+                            : `Load ${settings.data.keysPerPage} items per batch`}
                         >
                           {bigKeyScanning ? (
                             <>

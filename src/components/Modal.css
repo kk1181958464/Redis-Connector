@@ -20,6 +20,11 @@
   backdrop-filter: blur(4px);
 }
 
+.modal-overlay-base.no-transition,
+.modal-overlay-base.no-transition .modal-content-base {
+  transition: none !important;
+}
+
 .modal-content-base {
   position: relative;
   background: var(--bg-secondary);
@@ -42,6 +47,11 @@
   transform: scale(1) translateY(0);
 }
 
+.modal-content-base.dragging,
+.modal-content-base.resizing {
+  user-select: none;
+}
+
 /* 退场动画稍快一些 */
 .modal-overlay-base:not(.visible) {
   transition: background 0.15s ease-in, backdrop-filter 0.15s ease-in;
@@ -59,6 +69,14 @@
   border-bottom: 1px solid var(--border);
   background: var(--bg-tertiary);
   flex-shrink: 0;
+}
+
+.modal-header-base.draggable {
+  cursor: move;
+}
+
+.modal-header-base.draggable:active {
+  cursor: grabbing;
 }
 
 .modal-title-base {
@@ -93,4 +111,74 @@
 .modal-body-base {
   flex: 1;
   overflow-y: auto;
+}
+
+/* 调整大小手柄 */
+.resize-handle {
+  position: absolute;
+  z-index: 10;
+}
+
+.resize-handle.resize-n {
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: n-resize;
+}
+
+.resize-handle.resize-s {
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: s-resize;
+}
+
+.resize-handle.resize-e {
+  right: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: e-resize;
+}
+
+.resize-handle.resize-w {
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: w-resize;
+}
+
+.resize-handle.resize-ne {
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
+.resize-handle.resize-nw {
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+
+.resize-handle.resize-se {
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+}
+
+.resize-handle.resize-sw {
+  bottom: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  cursor: sw-resize;
 }

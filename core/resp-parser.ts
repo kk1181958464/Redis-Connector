@@ -3,15 +3,21 @@
  * 将 Redis 服务器返回的字节流解析为结构化数据
  */
 
-import { 
-  RESP_TYPES, 
-  RespValue, 
+import {
+  RESP_TYPES,
+  RespValue,
   RespTypeChar,
-  ParseResult 
+  ParseResult
 } from './types';
 
 const CRLF = '\r\n';
 const CRLF_LENGTH = 2;
+const CRLF_BUFFER = Buffer.from('\r\n');
+
+// 预分配缓冲区大小（64KB，可自动扩展）
+const INITIAL_BUFFER_SIZE = 64 * 1024;
+// 缓冲区压缩阈值（当已消费数据超过此比例时压缩）
+const COMPACT_THRESHOLD = 0.5;
 
 export class RespParseError extends Error {
   constructor(message: string, public offset?: number) {
@@ -21,15 +27,50 @@ export class RespParseError extends Error {
 }
 
 export class RespParser {
-  private buffer: Buffer = Buffer.alloc(0);
-  private offset: number = 0;
+  private buffer: Buffer;
+  private writeOffset: number = 0;  // 写入位置
+  private readOffset: number = 0;   // 读取位置
+
+  constructor() {
+    // 预分配缓冲区，避免频繁内存分配
+    this.buffer = Buffer.allocUnsafe(INITIAL_BUFFER_SIZE);
+  }
 
   /**
-   * 向缓冲区追加数据
+   * 向缓冲区追加数据（优化版：避免频繁拷贝）
    */
   append(data: Buffer): void {
-    this.buffer = Buffer.concat([this.buffer.subarray(this.offset), data]);
-    this.offset = 0;
+    const dataLength = data.length;
+    const remainingSpace = this.buffer.length - this.writeOffset;
+    const usedSpace = this.writeOffset - this.readOffset;
+
+    // 检查是否需要压缩或扩展缓冲区
+    if (dataLength > remainingSpace) {
+      // 先尝试压缩（移动未读数据到缓冲区开头）
+      if (this.readOffset > this.buffer.length * COMPACT_THRESHOLD) {
+        this.buffer.copy(this.buffer, 0, this.readOffset, this.writeOffset);
+        this.writeOffset = usedSpace;
+        this.readOffset = 0;
+      }
+
+      // 如果压缩后仍然不够，扩展缓冲区
+      const newRemainingSpace = this.buffer.length - this.writeOffset;
+      if (dataLength > newRemainingSpace) {
+        const newSize = Math.max(
+          this.buffer.length * 2,
+          usedSpace + dataLength + INITIAL_BUFFER_SIZE
+        );
+        const newBuffer = Buffer.allocUnsafe(newSize);
+        this.buffer.copy(newBuffer, 0, this.readOffset, this.writeOffset);
+        this.buffer = newBuffer;
+        this.writeOffset = usedSpace;
+        this.readOffset = 0;
+      }
+    }
+
+    // 写入新数据
+    data.copy(this.buffer, this.writeOffset);
+    this.writeOffset += dataLength;
   }
 
   /**
@@ -37,17 +78,17 @@ export class RespParser {
    * 如果数据不完整，返回 null
    */
   tryParse(): RespValue | null {
-    if (this.buffer.length - this.offset === 0) {
+    if (this.writeOffset - this.readOffset === 0) {
       return null;
     }
 
-    const startOffset = this.offset;
+    const startOffset = this.readOffset;
     try {
       const result = this.parseValue();
       return result;
     } catch (e) {
       if (e instanceof IncompleteDataError) {
-        this.offset = startOffset; // 回滚
+        this.readOffset = startOffset; // 回滚
         return null;
       }
       throw e;
@@ -75,7 +116,7 @@ export class RespParser {
       default:
         throw new RespParseError(
           `Unknown RESP type: ${typeStr}`,
-          this.offset - 1
+          this.readOffset - 1
         );
     }
   }
@@ -94,7 +135,7 @@ export class RespParser {
     const line = this.readLine();
     const value = parseInt(line, 10);
     if (isNaN(value)) {
-      throw new RespParseError(`Invalid integer: ${line}`, this.offset);
+      throw new RespParseError(`Invalid integer: ${line}`, this.readOffset);
     }
     return { type: 'integer', value };
   }
@@ -104,7 +145,7 @@ export class RespParser {
     const length = parseInt(lengthLine, 10);
 
     if (isNaN(length)) {
-      throw new RespParseError(`Invalid bulk string length: ${lengthLine}`, this.offset);
+      throw new RespParseError(`Invalid bulk string length: ${lengthLine}`, this.readOffset);
     }
 
     // $-1 表示 null
@@ -113,16 +154,16 @@ export class RespParser {
     }
 
     if (length < 0) {
-      throw new RespParseError(`Invalid bulk string length: ${length}`, this.offset);
+      throw new RespParseError(`Invalid bulk string length: ${length}`, this.readOffset);
     }
 
     // 检查是否有足够的数据
-    if (this.buffer.length - this.offset < length + CRLF_LENGTH) {
+    if (this.writeOffset - this.readOffset < length + CRLF_LENGTH) {
       throw new IncompleteDataError();
     }
 
-    const value = this.buffer.subarray(this.offset, this.offset + length).toString('utf8');
-    this.offset += length;
+    const value = this.buffer.subarray(this.readOffset, this.readOffset + length).toString('utf8');
+    this.readOffset += length;
 
     // 跳过 CRLF
     this.expectCRLF();
@@ -135,7 +176,7 @@ export class RespParser {
     const length = parseInt(lengthLine, 10);
 
     if (isNaN(length)) {
-      throw new RespParseError(`Invalid array length: ${lengthLine}`, this.offset);
+      throw new RespParseError(`Invalid array length: ${lengthLine}`, this.readOffset);
     }
 
     // *-1 表示 null 数组
@@ -144,7 +185,7 @@ export class RespParser {
     }
 
     if (length < 0) {
-      throw new RespParseError(`Invalid array length: ${length}`, this.offset);
+      throw new RespParseError(`Invalid array length: ${length}`, this.readOffset);
     }
 
     const elements: RespValue[] = [];
@@ -159,62 +200,60 @@ export class RespParser {
    * 读取一个字节
    */
   private readByte(): number {
-    if (this.offset >= this.buffer.length) {
+    if (this.readOffset >= this.writeOffset) {
       throw new IncompleteDataError();
     }
-    return this.buffer[this.offset++];
+    return this.buffer[this.readOffset++];
   }
 
   /**
-   * 读取一行（直到 CRLF）
+   * 读取一行（直到 CRLF）- 使用 indexOf 优化
    */
   private readLine(): string {
-    const start = this.offset;
-    let end = start;
+    const start = this.readOffset;
+    // 使用 Buffer.indexOf 替代手动循环，性能更好
+    const crlfIndex = this.buffer.indexOf(CRLF_BUFFER, start);
 
-    while (end < this.buffer.length - 1) {
-      if (this.buffer[end] === 0x0d && this.buffer[end + 1] === 0x0a) {
-        const line = this.buffer.subarray(start, end).toString('utf8');
-        this.offset = end + CRLF_LENGTH;
-        return line;
-      }
-      end++;
+    if (crlfIndex === -1 || crlfIndex >= this.writeOffset) {
+      throw new IncompleteDataError();
     }
 
-    throw new IncompleteDataError();
+    const line = this.buffer.subarray(start, crlfIndex).toString('utf8');
+    this.readOffset = crlfIndex + CRLF_LENGTH;
+    return line;
   }
 
   /**
    * 期望读取 CRLF
    */
   private expectCRLF(): void {
-    if (this.offset + CRLF_LENGTH > this.buffer.length) {
+    if (this.readOffset + CRLF_LENGTH > this.writeOffset) {
       throw new IncompleteDataError();
     }
 
-    if (this.buffer[this.offset] !== 0x0d || this.buffer[this.offset + 1] !== 0x0a) {
+    if (this.buffer[this.readOffset] !== 0x0d || this.buffer[this.readOffset + 1] !== 0x0a) {
       throw new RespParseError(
-        `Expected CRLF, got: ${this.buffer.subarray(this.offset, this.offset + 2).toString('hex')}`,
-        this.offset
+        `Expected CRLF, got: ${this.buffer.subarray(this.readOffset, this.readOffset + 2).toString('hex')}`,
+        this.readOffset
       );
     }
 
-    this.offset += CRLF_LENGTH;
+    this.readOffset += CRLF_LENGTH;
   }
 
   /**
    * 清空缓冲区
    */
   reset(): void {
-    this.buffer = Buffer.alloc(0);
-    this.offset = 0;
+    this.readOffset = 0;
+    this.writeOffset = 0;
   }
 
   /**
    * 获取剩余未解析的数据长度
    */
   get remainingLength(): number {
-    return this.buffer.length - this.offset;
+    return this.writeOffset - this.readOffset;
   }
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, MoreVertical, Pencil, Info, RefreshCw, Square, Trash2, ChevronRight, ChevronDown, Folder } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 import { useToast } from './Toast';
@@ -403,4 +403,4 @@ function ConnectionPanel({
   );
 }
 
-export default ConnectionPanel;
+export default React.memo(ConnectionPanel);

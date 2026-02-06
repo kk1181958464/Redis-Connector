@@ -70,7 +70,11 @@ function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
       onClose={onClose}
       title={<><Keyboard size={20} />{isZh ? '快捷键' : 'Keyboard Shortcuts'}</>}
       width={600}
+      height={500}
+      minWidth={450}
+      minHeight={350}
       className="shortcuts-modal"
+      storageKey="shortcuts"
     >
       <div className="modal-body">
         {shortcutGroups.map((group, groupIndex) => (

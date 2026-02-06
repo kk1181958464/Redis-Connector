@@ -59,7 +59,10 @@
   overflow: hidden;
   flex-shrink: 0;
   border-right: 1px solid var(--border);
-  transition: width 0.3s ease-in-out, opacity 0.25s ease-in-out, border 0.2s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease-out,
+              border 0.2s ease-out;
+  will-change: transform, opacity;
 }
 
 /* 侧边栏内容容器 - 保持固定宽度 */
@@ -176,7 +179,11 @@
 .content-bottom {
   overflow: hidden;
   flex-shrink: 0;
-  transition: height 0.35s ease-in-out, opacity 0.3s ease-in-out, border 0.2s ease-in-out;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.25s ease-out,
+              border 0.2s ease-out;
+  will-change: transform, opacity;
+  transform-origin: bottom;
 }
 
 /* 控制台展开状态 */
@@ -269,4 +276,79 @@
 .no-connection p {
   font-size: 14px;
   color: var(--text-muted);
+}
+
+/* 连接中过渡动画 */
+.connecting-overlay {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.connecting-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.connecting-spinner {
+  color: var(--accent);
+  animation: spin 1s linear infinite;
+  will-change: transform;
+}
+
+.connecting-overlay h2 {
+  font-size: 18px;
+  color: var(--text-primary);
+  font-weight: 500;
+  margin: 0;
+}
+
+.connecting-overlay p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 尊重用户减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .content-bottom,
+  .sidebar-resizer,
+  .console-resizer,
+  .toggle-sidebar-btn,
+  .toggle-console-btn {
+    transition: none !important;
+  }
+
+  .connecting-spinner {
+    animation: none;
+  }
+
+  .connecting-overlay {
+    animation: none;
+  }
 }

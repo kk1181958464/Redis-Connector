@@ -202,8 +202,6 @@ function ConnectionInfoModal({
     fetchInfo();
   }, [isOpen, connectionId, onExecute]);
 
-  if (!isOpen) return null;
-
   // 计算总 key 数量和过期数量
   const totalKeys = keyspaces.reduce((sum, ks) => sum + ks.keys, 0);
   const totalExpires = keyspaces.reduce((sum, ks) => sum + ks.expires, 0);
@@ -215,7 +213,11 @@ function ConnectionInfoModal({
       onClose={onClose}
       title={<><BarChart3 size={20} /> {connectionName} - {t('connection.details')}</>}
       width={720}
+      height={550}
+      minWidth={500}
+      minHeight={400}
       className="connection-info-modal"
+      storageKey="connection-info"
     >
       <div className="info-modal-body">
         {loading ? (

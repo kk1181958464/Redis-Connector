@@ -151,7 +151,11 @@ export function TitleBar() {
         onClose={() => setShowCloseModal(false)}
         title={isZh ? '关闭窗口' : 'Close Window'}
         width={400}
+        height={280}
+        minWidth={350}
+        minHeight={250}
         className="close-confirm-modal"
+        storageKey="close-confirm"
       >
         <div className="close-confirm-content">
           <p className="close-confirm-message">

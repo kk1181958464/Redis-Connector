@@ -352,11 +352,13 @@ input::placeholder {
 .status-dot.connecting {
   background: var(--warning);
   animation: pulse 1s infinite;
+  will-change: opacity;
 }
 
 .status-dot.disconnecting {
   background: var(--warning);
   animation: pulse 0.5s infinite;
+  will-change: opacity;
 }
 
 .status-dot.disconnected {
@@ -370,4 +372,15 @@ input::placeholder {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* 尊重用户减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { FixedSizeList as VirtualList } from 'react-window';
 import {
   FileText, List, Target, BarChart3, Hash, Waves, HelpCircle,
   Trash2, Pencil, FolderTree, ListOrdered, RefreshCw, FolderOpen,
@@ -11,6 +12,7 @@ import ConfirmModal from './ConfirmModal';
 import NewKeyModal from './NewKeyModal';
 import ExportImportModal from './ExportImportModal';
 import ServerInfoModal from './ServerInfoModal';
+import Modal from './Modal';
 import PubSubPanel from './PubSubPanel';
 import PerformanceChart from './PerformanceChart';
 import './KeyBrowser.css';
@@ -35,6 +37,7 @@ interface TreeNode {
   children: Map<string, TreeNode>;
   keys: KeyInfo[];
   isExpanded: boolean;
+  totalCount?: number; // 缓存的总 key 数量（包括子节点），避免重复计算
 }
 
 // 视图模式
@@ -119,7 +122,7 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
   const { showToast } = useToast();
   const keysPerPage = settings.data.keysPerPage;
 
-  // 构建树形结构
+  // 构建树形结构（优化版：构建时计算 totalCount）
   const buildTree = useCallback((keyInfos: KeyInfo[]): TreeNode => {
     const root: TreeNode = {
       name: '',
@@ -153,6 +156,17 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
       // 将 key 添加到当前节点
       current.keys.push(keyInfo);
     }
+
+    // 递归计算并缓存每个节点的 totalCount（一次性计算，避免渲染时重复递归）
+    const calculateTotalCount = (node: TreeNode): number => {
+      let count = node.keys.length;
+      for (const child of node.children.values()) {
+        count += calculateTotalCount(child);
+      }
+      node.totalCount = count;
+      return count;
+    };
+    calculateTotalCount(root);
 
     return root;
   }, [expandedPaths]);
@@ -189,8 +203,13 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
   // 计算树形数据（使用过滤后的 keys）
   const treeData = useMemo(() => buildTree(filteredKeys), [filteredKeys, buildTree]);
 
-  // 计算节点的总 key 数量（包括子节点）
+  // 计算节点的总 key 数量（使用缓存值，O(1) 操作）
   const countKeys = useCallback((node: TreeNode): number => {
+    // 优先使用缓存的 totalCount，避免递归计算
+    if (node.totalCount !== undefined) {
+      return node.totalCount;
+    }
+    // 兜底：如果没有缓存，递归计算
     let count = node.keys.length;
     for (const child of node.children.values()) {
       count += countKeys(child);
@@ -1776,34 +1795,79 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
     );
   };
 
-  // 渲染列表视图
-  const renderListView = () => (
-    <div className={`list-view-content ${sortAnimating ? 'sort-animating' : ''}`}>
-      {filteredKeys.map(({ key, type, ttl }) => (
-        <div
-          key={key}
-          className={`key-item ${selectedKey === key ? 'selected' : ''}`}
-          onClick={() => loadKeyValue(key, type)}
-        >
-          <span className="key-icon">{getTypeIcon(type)}</span>
-          <div className="key-info">
-            <span className="key-name" title={key}>{key}</span>
-            <span className="key-meta">
-              {type} | TTL: {ttl === -1 ? '∞' : ttl === -2 ? 'N/A' : `${ttl}s`}
-            </span>
-          </div>
-          <button
-            className="delete-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteKey(key);
-            }}
-            title={t('keyBrowser.delete')}
-          >
-            🗑️
-          </button>
+  // 列表项高度（用于虚拟滚动）
+  const LIST_ITEM_HEIGHT = 44;
+
+  // 虚拟滚动列表项渲染器
+  const ListItemRenderer = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const { key, type, ttl } = filteredKeys[index];
+    return (
+      <div
+        style={style}
+        className={`key-item ${selectedKey === key ? 'selected' : ''}`}
+        onClick={() => loadKeyValue(key, type)}
+      >
+        <span className="key-icon">{getTypeIcon(type)}</span>
+        <div className="key-info">
+          <span className="key-name" title={key}>{key}</span>
+          <span className="key-meta">
+            {type} | TTL: {ttl === -1 ? '∞' : ttl === -2 ? 'N/A' : `${ttl}s`}
+          </span>
         </div>
-      ))}
+        <button
+          className="delete-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteKey(key);
+          }}
+          title={t('keyBrowser.delete')}
+        >
+          🗑️
+        </button>
+      </div>
+    );
+  }, [filteredKeys, selectedKey, loadKeyValue, getTypeIcon, deleteKey, t]);
+
+  // 列表容器引用（用于获取高度）
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState(400);
+
+  // 监听容器高度变化
+  useEffect(() => {
+    const updateHeight = () => {
+      if (listContainerRef.current) {
+        const rect = listContainerRef.current.getBoundingClientRect();
+        setListHeight(rect.height || 400);
+      }
+    };
+
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+
+  // 渲染列表视图（虚拟滚动优化版）
+  const renderListView = () => (
+    <div
+      ref={listContainerRef}
+      className={`list-view-content ${sortAnimating ? 'sort-animating' : ''}`}
+      style={{ flex: 1, minHeight: 0 }}
+    >
+      {filteredKeys.length > 0 ? (
+        <VirtualList
+          height={listHeight}
+          width="100%"
+          itemCount={filteredKeys.length}
+          itemSize={LIST_ITEM_HEIGHT}
+          overscanCount={5}
+        >
+          {ListItemRenderer}
+        </VirtualList>
+      ) : (
+        <div className="empty-list">
+          {t('keyBrowser.noKeys') || '没有找到 keys'}
+        </div>
+      )}
     </div>
   );
 
@@ -1852,10 +1916,24 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
             onKeyDown={e => e.key === 'Enter' && handleScan()}
             placeholder={t('keyBrowser.search')}
           />
-          <button className="primary" onClick={handleScan} disabled={loading}>
+          <button
+            className="primary"
+            onClick={handleScan}
+            disabled={loading}
+            title={settings.language === 'zh-CN'
+              ? `每次扫描 ${keysPerPage} 条数据`
+              : `Scan ${keysPerPage} items per batch`}
+          >
             {loading ? t('keyBrowser.scanning') : t('keyBrowser.scan')}
           </button>
-          <button className="secondary" onClick={handleFullSearch} disabled={loading} title={t('keyBrowser.fullSearchHint')}>
+          <button
+            className="secondary"
+            onClick={handleFullSearch}
+            disabled={loading}
+            title={settings.language === 'zh-CN'
+              ? '扫描全库所有匹配的 Key'
+              : 'Scan all matching keys in database'}
+          >
             {t('keyBrowser.fullSearch')}
           </button>
         </div>
@@ -2016,6 +2094,9 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
                   className="load-more-btn"
                   onClick={loadMore}
                   disabled={loading}
+                  title={settings.language === 'zh-CN'
+                    ? `每次加载 ${keysPerPage} 条数据`
+                    : `Load ${keysPerPage} items per batch`}
                 >
                   {loading ? t('keyBrowser.scanning') : t('keyBrowser.loadMore') || '加载更多'}
                 </button>
@@ -2023,6 +2104,9 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
                   className="load-all-btn"
                   onClick={loadAll}
                   disabled={loading}
+                  title={settings.language === 'zh-CN'
+                    ? '加载所有剩余数据'
+                    : 'Load all remaining items'}
                 >
                   {t('keyBrowser.loadAll') || '加载全部'}
                 </button>
@@ -2208,89 +2292,91 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
       />
 
       {/* 复制 Key 弹窗 */}
-      {copyKeySource && (
-        <div className="modal-overlay" onClick={() => setCopyKeySource(null)}>
-          <div className="copy-key-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{settings.language === 'zh-CN' ? '复制 Key' : 'Duplicate Key'}</h2>
-              <button className="close-btn" onClick={() => setCopyKeySource(null)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>{settings.language === 'zh-CN' ? '源 Key' : 'Source Key'}</label>
-                <input type="text" value={copyKeySource} disabled />
-              </div>
-              <div className="form-group">
-                <label>{settings.language === 'zh-CN' ? '目标 Key' : 'Target Key'}</label>
-                <input
-                  type="text"
-                  value={copyKeyTarget}
-                  onChange={e => setCopyKeyTarget(e.target.value)}
-                  placeholder={settings.language === 'zh-CN' ? '输入新的 Key 名称' : 'Enter new key name'}
-                  autoFocus
-                />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="secondary" onClick={() => setCopyKeySource(null)}>
-                {t('common.cancel')}
-              </button>
-              <button
-                className="primary"
-                onClick={confirmCopyKey}
-                disabled={!copyKeyTarget.trim() || copyKeyTarget === copyKeySource}
-              >
-                {settings.language === 'zh-CN' ? '复制' : 'Duplicate'}
-              </button>
-            </div>
+      <Modal
+        isOpen={!!copyKeySource}
+        onClose={() => setCopyKeySource(null)}
+        title={settings.language === 'zh-CN' ? '复制 Key' : 'Duplicate Key'}
+        width={450}
+        minWidth={350}
+        minHeight={200}
+        className="copy-key-modal"
+        storageKey="copy-key"
+      >
+        <div className="modal-body-inner">
+          <div className="form-group">
+            <label>{settings.language === 'zh-CN' ? '源 Key' : 'Source Key'}</label>
+            <input type="text" value={copyKeySource || ''} disabled />
+          </div>
+          <div className="form-group">
+            <label>{settings.language === 'zh-CN' ? '目标 Key' : 'Target Key'}</label>
+            <input
+              type="text"
+              value={copyKeyTarget}
+              onChange={e => setCopyKeyTarget(e.target.value)}
+              placeholder={settings.language === 'zh-CN' ? '输入新的 Key 名称' : 'Enter new key name'}
+              autoFocus
+            />
           </div>
         </div>
-      )}
+        <div className="modal-footer">
+          <button className="secondary" onClick={() => setCopyKeySource(null)}>
+            {t('common.cancel')}
+          </button>
+          <button
+            className="primary"
+            onClick={confirmCopyKey}
+            disabled={!copyKeyTarget.trim() || copyKeyTarget === copyKeySource}
+          >
+            {settings.language === 'zh-CN' ? '复制' : 'Duplicate'}
+          </button>
+        </div>
+      </Modal>
 
       {/* 批量设置 TTL 弹窗 */}
-      {showBatchTTL && (
-        <div className="modal-overlay" onClick={() => setShowBatchTTL(false)}>
-          <div className="copy-key-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{settings.language === 'zh-CN' ? '批量设置 TTL' : 'Batch Set TTL'}</h2>
-              <button className="close-btn" onClick={() => setShowBatchTTL(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>{settings.language === 'zh-CN' ? '影响范围' : 'Affected Keys'}</label>
-                <input type="text" value={`${filteredKeys.length} keys`} disabled />
-              </div>
-              <div className="form-group">
-                <label>{settings.language === 'zh-CN' ? 'TTL (秒)' : 'TTL (seconds)'}</label>
-                <input
-                  type="number"
-                  value={batchTTLValue}
-                  onChange={e => setBatchTTLValue(e.target.value)}
-                  placeholder={settings.language === 'zh-CN' ? '输入秒数，-1 表示永不过期' : 'Seconds, -1 for no expiry'}
-                  autoFocus
-                />
-                <p className="form-hint">
-                  {settings.language === 'zh-CN'
-                    ? '输入 -1 移除过期时间（永不过期）'
-                    : 'Enter -1 to remove expiry (persist)'}
-                </p>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="secondary" onClick={() => setShowBatchTTL(false)}>
-                {t('common.cancel')}
-              </button>
-              <button
-                className="primary"
-                onClick={confirmBatchTTL}
-                disabled={!batchTTLValue.trim() || isNaN(parseInt(batchTTLValue, 10))}
-              >
-                {settings.language === 'zh-CN' ? '确定' : 'Apply'}
-              </button>
-            </div>
+      <Modal
+        isOpen={showBatchTTL}
+        onClose={() => setShowBatchTTL(false)}
+        title={settings.language === 'zh-CN' ? '批量设置 TTL' : 'Batch Set TTL'}
+        width={450}
+        minWidth={350}
+        minHeight={200}
+        className="batch-ttl-modal"
+        storageKey="batch-ttl"
+      >
+        <div className="modal-body-inner">
+          <div className="form-group">
+            <label>{settings.language === 'zh-CN' ? '影响范围' : 'Affected Keys'}</label>
+            <input type="text" value={`${filteredKeys.length} keys`} disabled />
+          </div>
+          <div className="form-group">
+            <label>{settings.language === 'zh-CN' ? 'TTL (秒)' : 'TTL (seconds)'}</label>
+            <input
+              type="number"
+              value={batchTTLValue}
+              onChange={e => setBatchTTLValue(e.target.value)}
+              placeholder={settings.language === 'zh-CN' ? '输入秒数，-1 表示永不过期' : 'Seconds, -1 for no expiry'}
+              autoFocus
+            />
+            <p className="form-hint">
+              {settings.language === 'zh-CN'
+                ? '输入 -1 移除过期时间（永不过期）'
+                : 'Enter -1 to remove expiry (persist)'}
+            </p>
           </div>
         </div>
-      )}
+        <div className="modal-footer">
+          <button className="secondary" onClick={() => setShowBatchTTL(false)}>
+            {t('common.cancel')}
+          </button>
+          <button
+            className="primary"
+            onClick={confirmBatchTTL}
+            disabled={!batchTTLValue.trim() || isNaN(parseInt(batchTTLValue, 10))}
+          >
+            {settings.language === 'zh-CN' ? '确定' : 'Apply'}
+          </button>
+        </div>
+      </Modal>
 
       {/* 新建 Key 弹窗 */}
       <NewKeyModal
@@ -2333,6 +2419,7 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
         isOpen={showPubSub}
         onClose={() => setShowPubSub(false)}
         onExecute={onExecute}
+        connectionId={connectionId}
       />
 
       {/* 性能监控面板 */}
@@ -2345,4 +2432,4 @@ function KeyBrowser({ connectionId, onExecute, onPipeline, refreshTrigger }: Key
   );
 }
 
-export default KeyBrowser;
+export default React.memo(KeyBrowser);
