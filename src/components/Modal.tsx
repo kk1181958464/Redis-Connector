@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import './Modal.css';
 
@@ -348,7 +349,7 @@ function Modal({
     } : {}),
   };
 
-  return (
+  return createPortal(
     <div
       ref={overlayRef}
       className={`modal-overlay-base ${isVisible ? 'visible' : ''} ${isAnimating ? 'animating' : ''} ${isDragging || isResizing ? 'no-transition' : ''}`}
@@ -390,7 +391,8 @@ function Modal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
