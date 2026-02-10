@@ -93,30 +93,34 @@
   padding: 0;
 }
 
+.close-confirm-modal .modal-header-base {
+  padding: 10px 16px;
+}
+
 .close-confirm-content {
-  padding: 24px;
+  padding: 12px 16px;
 }
 
 .close-confirm-message {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--text-secondary);
-  margin: 0 0 20px 0;
+  margin: 0 0 8px 0;
   text-align: center;
 }
 
 .close-confirm-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .close-option-btn {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  padding: 20px;
+  gap: 10px;
+  padding: 8px 12px;
   background: var(--bg-tertiary);
   border: 2px solid var(--border);
   border-radius: var(--radius-lg);
@@ -138,14 +142,20 @@
   background: var(--error-muted);
 }
 
+.close-option-btn .option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .close-option-btn .option-label {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .close-option-btn .option-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
 }
 

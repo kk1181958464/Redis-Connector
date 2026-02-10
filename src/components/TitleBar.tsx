@@ -150,10 +150,10 @@ export function TitleBar() {
         isOpen={showCloseModal}
         onClose={() => setShowCloseModal(false)}
         title={isZh ? '关闭窗口' : 'Close Window'}
-        width={400}
-        height={280}
-        minWidth={350}
-        minHeight={250}
+        width={340}
+        height={190}
+        minWidth={280}
+        minHeight={160}
         className="close-confirm-modal"
         storageKey="close-confirm"
       >
@@ -167,18 +167,22 @@ export function TitleBar() {
               className="close-option-btn minimize"
               onClick={() => handleCloseChoice('minimize')}
             >
-              <Minus size={20} />
-              <span className="option-label">{isZh ? '最小化到托盘' : 'Minimize to Tray'}</span>
-              <span className="option-desc">{isZh ? '程序在后台继续运行' : 'App keeps running in background'}</span>
+              <Minus size={16} />
+              <div className="option-text">
+                <span className="option-label">{isZh ? '最小化到托盘' : 'Minimize to Tray'}</span>
+                <span className="option-desc">{isZh ? '程序在后台继续运行' : 'App keeps running in background'}</span>
+              </div>
             </button>
 
             <button
               className="close-option-btn quit"
               onClick={() => handleCloseChoice('quit')}
             >
-              <X size={20} />
-              <span className="option-label">{isZh ? '退出程序' : 'Quit Application'}</span>
-              <span className="option-desc">{isZh ? '完全关闭程序' : 'Close the app completely'}</span>
+              <X size={16} />
+              <div className="option-text">
+                <span className="option-label">{isZh ? '退出程序' : 'Quit Application'}</span>
+                <span className="option-desc">{isZh ? '完全关闭程序' : 'Close the app completely'}</span>
+              </div>
             </button>
           </div>
 
